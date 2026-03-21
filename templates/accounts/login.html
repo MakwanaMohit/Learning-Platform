@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<!-- Messages -->
+{% if messages %}
+    <div>
+        {% for message in messages %}
+            <div style="padding:10px; margin-bottom:10px;
+                        border:1px solid #ccc;
+                        color:
+                        {% if message.tags == 'error' %}red
+                        {% elif message.tags == 'success' %}green
+                        {% else %}black
+                        {% endif %};">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- Non-field errors -->
+{% if form.non_field_errors %}
+    <div style="color:red;">
+        {% for error in form.non_field_errors %}
+            {{ error }}
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label>Username</label><br>
+        {{ form.username }}
+        <div style="color:red;">
+            {{ form.username.errors }}
+        </div>
+    </div>
+
+    <div>
+        <label>Password</label><br>
+        {{ form.password }}
+        <div style="color:red;">
+            {{ form.password.errors }}
+        </div>
+    </div>
+
+    <br>
+
+    <button type="submit">Login</button>
+
+</form>
+
+<br>
+
+<p>
+    Don't have an account?
+    <a href="{% url 'accounts:register' %}">Register</a>
+</p>
+
+</body>
+</html>

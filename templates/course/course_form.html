@@ -1,0 +1,146 @@
+{% extends "course/base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}Create Course{% endblock %}
+{% block js %}
+    <script>
+        function addCategory() {
+            let input = document.getElementById("new-category");
+            let name = input.value.trim();
+
+            if (!name) return;
+
+            fetch("{% url 'course:create_category' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) {
+                        let select = document.getElementById("id_category");
+
+                        // ✅ Check if already exists
+                        let exists = Array.from(select.options).some(
+                            opt => opt.value == data.id
+                        );
+
+                        if (!exists) {
+                            let option = new Option(data.name, data.id, true, true);
+                            select.add(option);
+                        } else {
+                            // If exists, just select it
+                            select.value = data.id;
+                        }
+
+                        input.value = "";
+                    }
+                });
+        }
+    </script>
+    <script>
+        function addTag() {
+            let input = document.getElementById("new-tag");
+            let name = input.value.trim();
+
+            if (!name) return;
+
+            fetch("{% url 'course:create_tag' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) {
+                        let select = document.getElementById("id_keywords");
+
+                        // ✅ Check if already exists
+                        let exists = Array.from(select.options).some(
+                            opt => opt.value == data.id
+                        );
+
+                        if (!exists) {
+                            let option = new Option(data.name, data.id, true, true);
+                            select.add(option);
+                        } else {
+                            // If exists, just select it
+                            Array.from(select.options).forEach(opt => {
+                                if (opt.value == data.id) {
+                                    opt.selected = true;
+                                }
+                            });
+                        }
+
+                        input.value = "";
+                    }
+                });
+        }
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <h3 class="mb-4">Create New Course</h3>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% for field in form %}
+
+                    {% if field.name == "category" %}
+                        <label>{{ field.label }}</label>
+
+                        <div class="d-flex mb-2">
+                            {{ field }}
+                        </div>
+
+                        <!-- Add Category -->
+                        <div class="d-flex mb-3">
+                            <input type="text" id="new-category" class="form-control me-2" placeholder="Add category">
+                            <button type="button"
+                                    class="btn btn-outline-primary"
+                                    onclick="addCategory()">
+                                Add
+                            </button>
+                        </div>
+
+                    {% elif field.name == "keywords" %}
+                        <label>{{ field.label }}</label>
+
+                        <!-- Better multi-select -->
+                        <div class="mb-2">
+                            {{ field }}
+                        </div>
+
+                        <!-- Add Tag -->
+                        <div class="d-flex mb-3">
+                            <input type="text" id="new-tag" class="form-control me-2" placeholder="Add tag">
+                            <button type="button"
+                                    class="btn btn-outline-primary"
+                                    onclick="addTag()">
+                                Add
+                            </button>
+                        </div>
+
+                    {% else %}
+                        {% bootstrap_field field %}
+                    {% endif %}
+
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary">
+                    Create Course
+                </button>
+            </form>
+
+        </div>
+    </div>
+{% endblock %}

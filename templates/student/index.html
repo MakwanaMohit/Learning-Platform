@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+</head>
+<body>
+
+<h2>Student Dashboard</h2>
+
+<!-- Messages -->
+{% if messages %}
+    <div>
+        {% for message in messages %}
+            <div style="
+                padding:10px;
+                margin-bottom:10px;
+                border:1px solid #ccc;
+                background-color:
+                {% if message.tags == 'success' %}#e6ffed
+                {% elif message.tags == 'error' %}#ffe6e6
+                {% else %}#f2f2f2
+                {% endif %};
+            ">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<hr>
+
+<!-- User Information -->
+<h3>User Information</h3>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <td><strong>Username</strong></td>
+        <td>{{ request.user.username }}</td>
+    </tr>
+
+    <tr>
+        <td><strong>First Name</strong></td>
+        <td>{{ request.user.first_name }}</td>
+    </tr>
+
+    <tr>
+        <td><strong>Last Name</strong></td>
+        <td>{{ request.user.last_name }}</td>
+    </tr>
+
+    <tr>
+        <td><strong>Email</strong></td>
+        <td>{{ request.user.email }}</td>
+    </tr>
+
+    <tr>
+        <td><strong>Role</strong></td>
+        <td>{{ request.user.role|title }}</td>
+    </tr>
+
+    <tr>
+        <td><strong>Last Login</strong></td>
+        <td>{{ request.user.last_login }}</td>
+    </tr>
+
+</table>
+
+<hr>
+
+<!-- Logout Button (POST required) -->
+<form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button type="submit" style="
+        padding:10px 20px;
+        background-color:#dc3545;
+        color:white;
+        border:none;
+        cursor:pointer;
+    ">
+        Logout
+    </button>
+</form>
+
+</body>
+</html>

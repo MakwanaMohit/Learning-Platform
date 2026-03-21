@@ -1,2 +1,2 @@
 
-from .index import CourseIndexView
+from .CourseIndex import CourseListView
