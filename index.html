@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Unified | Educational Platform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="nav-home">
+        <a href="home.html" class="link">🏠 Home</a>
+    </nav>
+
+    <div id="auth-page" class="page">
+        <div class="auth-container">
+            <div class="logo">
+                <span class="logo-icon">🎓</span>
+            </div>
+            <h1>Learn Unified</h1>
+            <p class="tagline">Empowering Education Through Innovation</p>
+            <div id="login-form">
+                <h2>🔐 Welcome Back</h2>
+                <input type="email" id="login-email" placeholder="📧 Email Address" required>
+                <input type="password" id="login-password" placeholder="🔒 Password" required>
+                <button onclick="handleLogin()">Login</button>
+                <p>Don't have an account? <span class="link" onclick="toggleAuth()">Create one now →</span></p>
+            </div>
+            <div id="register-form" class="hidden">
+                <h2>🚀 Join Our Community</h2>
+                <input type="text" id="reg-name" placeholder="👤 Full Name">
+                <input type="email" id="reg-email" placeholder="📧 Email Address">
+                <input type="password" id="reg-password" placeholder="🔒 Create Password">
+                <select id="reg-role">
+                    <option value="student">🎓 Student</option>
+                    <option value="mentor">👨‍🏫 Mentor</option>
+                </select>
+                <button onclick="handleRegister()">Create Account</button>
+                <p>Already have an account? <span class="link" onclick="toggleAuth()">Sign in here ←</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="student-dash" class="page hidden">
+        <nav class="sidebar">
+            <h3>🎓 Student Portal</h3>
+            <ul>
+                <li onclick="showTab('stu-home', 'student')">📊 Dashboard</li>
+                <li onclick="showTab('stu-courses', 'student')">📚 Browse Courses</li>
+                <li onclick="logout()">🚪 Logout</li>
+            </ul>
+        </nav>
+        <main class="content">
+            <header>Welcome back, <span id="stu-user-name"></span>! 🌟</header>
+            
+            <div id="stu-home" class="tab-content">
+                <h3>📈 Your Learning Journey</h3>
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <h4>📚 Enrolled Courses</h4>
+                        <p id="count-enrolled" class="stat-number">0</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h4>🎯 Completed</h4>
+                        <p class="stat-number">0</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h4>⭐ Achievements</h4>
+                        <p class="stat-number">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stu-courses" class="tab-content hidden">
+                <h3>🚀 Available Courses</h3>
+                <div id="course-list" class="grid-layout"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="mentor-dash" class="page hidden">
+        <nav class="sidebar">
+            <h3>👨‍🏫 Mentor Panel</h3>
+            <ul>
+                <li onclick="showTab('men-manage', 'mentor')">📖 My Courses</li>
+                <li onclick="showTab('men-upload', 'mentor')">✨ Upload Course</li>
+                <li onclick="logout()">🚪 Logout</li>
+            </ul>
+        </nav>
+        <main class="content">
+            <header>Hello, <span id="men-user-name"></span>! 🎯</header>
+            
+            <div id="men-manage" class="tab-content">
+                <h3>📚 Your Published Content</h3>
+                <div id="mentor-course-list" class="grid-layout"></div>
+            </div>
+
+            <div id="men-upload" class="tab-content hidden">
+                <h3>🚀 Create New Course</h3>
+                <div class="form-card">
+                    <input type="text" id="course-title" placeholder="📝 Course Title">
+                    <textarea id="course-desc" rows="4" placeholder="📖 Course Description"></textarea>
+                    <button onclick="uploadCourse()">📤 Publish Course</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
