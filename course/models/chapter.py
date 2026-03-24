@@ -37,8 +37,6 @@ class Chapter(models.Model):
         related_name="required_for"
     )
 
-    # Publishing control
-    is_published = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -52,7 +50,6 @@ class Chapter(models.Model):
         indexes = [
             models.Index(fields=["unit", "order"]),
             models.Index(fields=["unit", "slug"]),
-            models.Index(fields=["is_published"]),
         ]
 
     def __str__(self):

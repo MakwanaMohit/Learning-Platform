@@ -1,4 +1,6 @@
 from django import forms
+
+from chunked_upload.models import ChunkedUpload
 from course.models import Course
 
 class CourseForm(forms.ModelForm):
@@ -9,11 +11,11 @@ class CourseForm(forms.ModelForm):
             "short_description",
             "description",
             "thumbnail",
-            "demo_video",
             "category",
             "keywords",
             "mentors",
             "level",
+            "status",
             "is_free",
             "price",
             "duration_hours",

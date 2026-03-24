@@ -1,83 +1,250 @@
 {% extends "course/base.html" %}
 {% block title %}Courses{% endblock %}
+{% block js %}
+    <style>
+        .tag-label {
+            cursor: pointer;
+        }
 
+        /* When checked → change badge inside label */
+        input[type="checkbox"]:checked + .tag-label span {
+            background-color: #198754 !important; /* bg-success */
+            color: #fff !important; /* text-light */
+            border-color: #198754 !important;
+        }
+
+        .tags-scroll-box {
+            max-height: 70vh; /* controls height */
+            overflow-y: auto; /* vertical scroll */
+            overflow-x: hidden; /* 🚫 prevent horizontal scroll */
+
+            display: flex;
+            flex-wrap: wrap; /* ensure items wrap instead of overflow */
+            gap: 8px;
+            scroll-behavior: smooth;
+        }
+    </style>
+{% endblock %}
 {% block content %}
-<div class="row">
+    <div class="row">
 
-    <!-- COURSE LIST -->
-    <div class="col-md-9">
-        <div class="row">
-            {% for course in courses %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100">
-                        <img src="{{ course.thumbnail.url }}"
-                             class="card-img-top"
-                             style="height:180px; object-fit:cover;">
+        <!-- COURSE LIST -->
+        <div class="col-md-9">
+            <div class="row">
+                {% for course in courses %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            {% if course.thumbnail and course.thumbnail.url %}
+                                <img src="{{ course.thumbnail.url }}"
+                                     class="card-img-top"
+                                     style="height:140px; object-fit:cover;">
+                            {% endif %}
+                            <div class="card-body p-2">
 
-                        <div class="card-body">
-                            <h5 class="card-title">{{ course.title }}</h5>
+                                <h6 class="card-title mb-1">{{ course.title }}</h6>
 
-                            <p class="card-text">
-                                {{ course.short_description|truncatechars:80 }}
-                            </p>
+                                <p class="card-text small text-muted mb-1">
+                                    {{ course.short_description|truncatechars:60 }}
+                                </p>
 
-                            <p class="text-muted small">
-                                {{ course.category.name }} |
-                                {{ course.get_level_display }}
-                            </p>
-                        </div>
+                                <!-- NEW: Compact Info Row -->
+                                <div class="small text-muted mb-1">
 
-                        <div class="card-footer">
-                            <a href="{{ course.get_absolute_url }}"
-                               class="btn btn-outline-primary btn-sm w-100">
-                                View Course
-                            </a>
+                                    <!-- Mentors -->
+                                    <div>
+                                        <strong>Mentors:</strong>
+
+                                        {{ course.mentor }}
+                                        {% if course.mentors.all %}
+                                            {% for mentor in course.mentors.all %}
+                                                {{ mentor }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Duration -->
+                                    <div>
+                                        <strong>Duration:</strong> {{ course.duration_hours }}
+                                    </div>
+
+                                    <!-- Price -->
+                                    <div>
+                                        <strong>Price:</strong>
+                                        {% if course.is_free %}
+                                            <span class="text-success">Free</span>
+                                        {% else %}
+                                            ₹{{ course.price }}
+                                        {% endif %}
+                                    </div>
+
+                                </div>
+
+                                <p class="text-muted small mb-1">
+                                    {{ course.category.name }} |
+                                    {{ course.get_level_display }}
+                                </p>
+
+                                <div class="mb-1">
+                                    {% for tag in course.keywords.all|slice:":4" %}
+                                        <span class="badge bg-light text-dark border small">{{ tag.name }}</span>
+                                    {% endfor %}
+
+                                    {% if course.keywords.count > 4 %}
+                                        <span class="badge bg-secondary small">
+                                            +{{ course.keywords.count|add:"-4" }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <span class="badge small
+                                    {% if course.status == 'published' %}
+                                        bg-success text-light
+                                    {% elif course.status == 'draft' %}
+                                        bg-warning text-dark
+                                    {% else %}
+                                        bg-danger text-light
+                                    {% endif %}">
+                                    {{ course.status }}
+                                </span>
+
+                            </div>
+
+                            <div class="card-footer p-2">
+                                <a href="{{ course.get_absolute_url }}"
+                                   class="btn btn-outline-primary btn-sm w-100 py-1">
+                                    View
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% empty %}
-                <p>No courses found.</p>
-            {% endfor %}
+
+                {% empty %}
+                    <p>No courses found.</p>
+                {% endfor %}
+            </div>
+
+            <div class="d-flex justify-content-center mt-4">
+                <nav>
+                    <ul class="pagination">
+
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                    Previous
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                    Next
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                    Last
+                                </a>
+                            </li>
+                        {% endif %}
+
+                    </ul>
+                </nav>
+            </div>
         </div>
-    </div>
 
-    <!-- FILTER SIDEBAR RIGHT -->
-    <div class="col-md-3">
-        <form method="get">
+        <!-- FILTER SIDEBAR RIGHT -->
+        <div class="col-md-3">
 
-            <h5>Category</h5>
-            {% for cat in categories %}
-                <div class="form-check">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           name="category"
-                           value="{{ cat.slug }}">
-                    <label class="form-check-label">
-                        {{ cat.name }}
-                    </label>
+            <form method="get">
+
+                <button type="submit" class="btn btn-outline-primary mt-3 w-100">
+                    Apply Filters
+                </button>
+
+                <h5 class="mb-2">Category</h5>
+                <div class="d-flex flex-wrap gap-2">
+
+                    {% for cat in catqueryset %}
+                        <input type="checkbox"
+                               id="cat-{{ cat.slug }}"
+                               name="category"
+                               value="{{ cat.slug }}"
+                               hidden checked>
+
+                        <label for="cat-{{ cat.slug }}" class="tag-label">
+                <span class="badge bg-light text-dark border">
+                    {{ cat.name }}
+                </span>
+                        </label>
+                    {% endfor %}
+                    {% for cat in categories %}
+                        {% if cat.slug not in catset %}
+                            <input type="checkbox"
+                                   id="cat-{{ cat.slug }}"
+                                   name="category"
+                                   value="{{ cat.slug }}"
+                                   hidden>
+
+                            <label for="cat-{{ cat.slug }}" class="tag-label">
+                                <span class="badge bg-light text-dark border">
+                                    {{ cat.name }}
+                                </span>
+                            </label>
+                        {% endif %}
+                    {% endfor %}
+
                 </div>
-            {% endfor %}
 
-            <hr>
+                <hr>
 
-            <h5>Tags</h5>
-            {% for tag in tags %}
-                <div class="form-check">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           name="tags"
-                           value="{{ tag.slug }}">
-                    <label class="form-check-label">
-                        {{ tag.name }}
-                    </label>
+                <h5 class="mb-2">Tags</h5>
+                <div class="tags-scroll-box">
+
+                    {% for tag in tagqueryset %}
+                        <input type="checkbox"
+                               id="tag-{{ tag.slug }}"
+                               name="tags"
+                               value="{{ tag.slug }}"
+                               hidden checked>
+
+                        <label for="tag-{{ tag.slug }}" class="tag-label">
+                <span class="badge bg-light text-dark border">
+                    {{ tag.name }}
+                </span>
+                        </label>
+                    {% endfor %}
+                    {% for tag in tags %}
+
+                        {% if tag.slug not in tagset %}
+                            <input type="checkbox"
+                                   id="tag-{{ tag.slug }}"
+                                   name="tags"
+                                   value="{{ tag.slug }}"
+                                   hidden>
+
+                            <label for="tag-{{ tag.slug }}" class="tag-label">
+                <span class="badge bg-light text-dark border">
+                    {{ tag.name }}
+                </span>
+                            </label>
+                        {% endif %}
+                    {% endfor %}
+
                 </div>
-            {% endfor %}
 
-            <button type="submit" class="btn btn-success mt-3 w-100">
-                Apply Filters
-            </button>
-        </form>
+
+            </form>
+        </div>
+
     </div>
-
-</div>
 {% endblock %}

@@ -1,0 +1,315 @@
+{% extends "course/base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}LMS | {{ course.title }}{% endblock %}
+
+{% block js %}
+    <script>
+        function createUnit() {
+            let form = document.getElementById("unit-form");
+            let formData = new FormData(form);
+
+            fetch("{% url 'course:unit_create' course.slug %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) {
+                        location.reload();
+                    } else {
+                        console.log(data.errors);
+                    }
+                });
+        }
+
+        function deleteUnit(deleteUrl, unitId) {
+            let input = document.getElementById(`confirm-unit-${unitId}`);
+            let name = input.value;
+
+            fetch(deleteUrl, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "confirm_name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById(`unit-${unitId}`).remove();
+                    } else {
+                        alert(data.error || "Error deleting unit");
+                    }
+                });
+        }
+
+        function edixxtUnit(url, unitId) {
+            fetch(url, {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(res => res.text())
+                .then(html => {
+                    let container = document.querySelector(`#collapse${unitId} .accordion-body`);
+                    container.innerHTML = html;
+                });
+        }
+
+        function editUnit(url, unitId) {
+            fetch(url, {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(res => res.text())
+                .then(html => {
+                    let collapseEl = document.getElementById(`collapse${unitId}`);
+                    let container = collapseEl.querySelector('.accordion-body');
+
+                    container.innerHTML = html;
+
+                    bootstrap.Collapse.getOrCreateInstance(collapseEl).show();
+                });
+        }
+    </script>
+{% endblock %}
+{% block content %}
+
+    <div class="container mt-4">
+
+        <!-- ================= COURSE DETAILS ================= -->
+        <div class="card shadow-sm mb-4">
+            <div class="row g-0">
+
+                <!-- LEFT -->
+                <div class="col-md-5 p-4">
+
+                    <h4 class="mb-3">Course Details</h4>
+
+                    <p><strong>Title:</strong> {{ course.title }}</p>
+                    <p><strong>Short Description:</strong> {{ course.short_description }}</p>
+
+                    <hr>
+
+                    <p><strong>Category:</strong> {{ course.category }}</p>
+                    <p><strong>Level:</strong> {{ course.get_level_display }}</p>
+
+                    <p><strong>Price:</strong>
+                        {% if course.is_free %}
+                            Free
+                        {% else %}
+                            ₹{{ course.price }}
+                        {% endif %}
+                    </p>
+
+                    <p><strong>Duration:</strong> {{ course.duration_hours }} hours</p>
+
+                    <p><strong>Mentor:</strong> {{ course.mentor }}</p>
+
+                    <p><strong>Other Mentors:</strong>
+                        {% for m in course.mentors.all %}
+                            {{ m }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            <span class="text-muted">None</span>
+                        {% endfor %}
+                    </p>
+                    <p><strong>Status:</strong>
+
+                        <span class="badge
+
+                         {% if course.status == 'published' %}
+                        	bg-success text-light
+                        {% elif course.status == 'draft' %}
+                            bg-warning text-dark
+                        {% else %}
+                            bg-danger text-light
+                        {% endif %}
+                          border">{{ course.status }}</span>
+
+                    </p>
+
+                    <p><strong>Tags:</strong>
+                        {% for tag in course.keywords.all %}
+                            <span class="badge bg-light text-dark border">{{ tag.name }}</span>
+                        {% empty %}
+                            <span class="text-muted">No tags</span>
+                        {% endfor %}
+                    </p>
+
+                    {% if is_mentor %}
+                        <div class="mt-4 d-flex gap-2">
+                            <a href="{% url 'course:course_change' course.slug %}"
+                               class="btn btn-sm btn-outline-warning">
+                                Edit
+                            </a>
+
+                            <form method="post" action="{% url 'course:course_delete' course.slug %}">
+                                {% csrf_token %}
+
+                                <input type="text"
+                                       name="confirm_name"
+                                       class="form-control form-control-sm mb-2"
+                                       placeholder="Type course name to delete">
+
+                                {#                                <input type="hidden" name="type" value="DELETE">#}
+
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    Delete Course
+                                </button>
+                            </form>
+
+                        </div>
+                    {% endif %}
+
+                </div>
+
+                <!-- RIGHT: VIDEO -->
+                <div class="col-md-7">
+                    {% if course.demo_video %}
+                        <video controls class="w-100 rounded-end">
+                            <source src="{{ course.demo_video.url }}" type="video/mp4">
+                        </video>
+                    {% endif %}
+                    <p><strong>Description:</strong>
+                        {{ course.description }}</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= UNITS ================= -->
+        <div class="card shadow-sm">
+
+            <div class="card-header">
+                <h5 class="mb-0">Units</h5>
+            </div>
+
+            <div class="card-body p-2">
+
+                <div class="accordion" id="unitAccordion">
+
+                    <!-- 🔹 CREATE UNIT (FIRST ACCORDION ITEM) -->
+                    {% if is_mentor %}
+                        <div class="accordion-item border-0 border-bottom">
+
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2 px-3"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#createUnitCollapse"
+                                        data-bs-parent="#unitAccordion">
+
+                                    + Add New Unit
+
+                                </button>
+                            </h2>
+
+                            <div id="createUnitCollapse" class="accordion-collapse collapse"
+                                 data-bs-parent="#unitAccordion">
+                                <div class="accordion-body py-2 px-3">
+
+                                    <form id="unit-form">
+                                        {% csrf_token %}
+                                        {% bootstrap_form unit_form %}
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-primary"
+                                                onclick="createUnit()">
+                                            Create Unit
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    {% endif %}
+
+                    <!-- 🔹 UNIT LIST -->
+                    {% for unit in units %}
+                        {% if not unit.is_locked or is_mentor %}
+                            <div id="unit-{{ unit.id }}" class="accordion-item border-0 border-bottom">
+
+                                <h2 class="accordion-header d-flex justify-content-between align-items-center">
+
+                                    <!-- LEFT: Accordion toggle button (ONLY text inside) -->
+                                    <button class="accordion-button collapsed py-2 px-3"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#collapse{{ unit.id }}">
+
+                                        <span>{{ unit.title }}</span>
+                                    </button>
+
+                                    <!-- RIGHT: Actions (OUTSIDE button) -->
+                                    <a href="{{ unit.get_absolute_url }}" class="btn btn-sm btn-outline-primary">View</a>
+                                    {% if is_mentor %}
+                                        <div class="d-flex align-items-center gap-2 px-3">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    onclick="editUnit('{% url 'course:unit_change' course.slug unit.slug %}', {{ unit.id }})">
+                                                Edit
+                                            </button>
+
+                                            <input type="text"
+                                                   id="confirm-unit-{{ unit.id }}"
+                                                   class="form-control form-control-sm"
+                                                   style="width: 150px;"
+                                                   placeholder="Type unit name">
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteUnit('{% url 'course:unit_delete' course.slug unit.slug %}', {{ unit.id }})">
+                                                Delete
+                                            </button>
+
+                                        </div>
+                                    {% endif %}
+
+                                </h2>
+
+                                <div id="collapse{{ unit.id }}" class="accordion-collapse collapse"
+                                     data-bs-parent="#unitAccordion">
+                                    <div class="accordion-body py-2 px-3">
+
+                                        <!-- Chapters -->
+                                        <ul class="list-group list-group-flush">
+
+                                            {% for chapter in unit.chapters.all %}
+                                                <li class="list-group-item py-1 px-2 border-0">
+                                                    <a href="#" class="text-decoration-none small">
+                                                        ▶ {{ chapter.title }}
+                                                    </a>
+                                                </li>
+                                            {% empty %}
+                                                <li class="text-muted small px-2">
+                                                    No chapters yet
+                                                </li>
+                                            {% endfor %}
+
+                                        </ul>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        {% endif %}
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+        <br><br><br>
+
+    </div>
+{% endblock %}
