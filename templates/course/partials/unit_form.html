@@ -5,8 +5,7 @@
 
     {% bootstrap_form form %}
 
-    {% if unit_page_redirect %}<input type="hidden" name="unit-page-redirect" value="true">{% endif %}
-
+    {% if page_redirect %}<input type="hidden" name="page-redirect" value="true">{% endif %}
     <button type="submit" class="btn btn-sm btn-success">
         Save Changes
     </button>

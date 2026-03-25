@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils.text import slugify
 
 
 class Chapter(models.Model):
@@ -44,7 +45,6 @@ class Chapter(models.Model):
     class Meta:
         ordering = ["order"]
         unique_together = [
-            ("unit", "order"),
             ("unit", "slug"),
         ]
         indexes = [
@@ -64,3 +64,20 @@ class Chapter(models.Model):
                 "chapter_slug": self.slug,
             },
         )
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while Chapter.objects.filter(
+                unit=self.unit ,
+                slug=slug
+            ).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)

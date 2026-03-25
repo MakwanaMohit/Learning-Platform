@@ -10,7 +10,10 @@ from .models import ChunkedUpload
 from .response import Response
 from .constants import http_status, COMPLETE
 from .exceptions import ChunkedUploadError
-
+from django.conf import settings
+import os
+import uuid
+from django.core.files.storage import default_storage
 
 def is_authenticated(user):
     if callable(user.is_authenticated):
@@ -118,6 +121,9 @@ class ChunkedUploadView(ChunkedUploadBaseView):
     # content-range header is not found. Default is False to match Jquery File
     # Upload behavior (doesn't send header if the file is smaller than chunk)
     fail_if_no_header = False
+    file_field = None
+    model_class = None
+    storage = None
 
     def get_extra_attrs(self, request):
         """
@@ -140,14 +146,53 @@ class ChunkedUploadView(ChunkedUploadBaseView):
         return self.max_bytes
 
     def create_chunked_upload(self, save=False, **attrs):
-        """
-        Creates new chunked upload instance. Called if no 'upload_id' is
-        found in the POST data.
-        """
         chunked_upload = self.model(**attrs)
-        # file starts empty
-        chunked_upload.file.save(name='tmp', content=ContentFile(''), save=save)
+
+        original_name = attrs.get("filename", "file")
+
+        # 🔥 get final path
+        final_path = self.get_file_path(self.request, original_name)
+
+
+        file_obj = chunked_upload.file
+
+        file_obj.name = final_path
+
+        if not self.storage:
+            self.storage = default_storage
+
+        default_storage.save(final_path, ContentFile(''))
+
+        # mark as committed so Django doesn't re-save
+        file_obj._committed = True
+
+        if save:
+            chunked_upload.save()
+
         return chunked_upload
+
+
+    def get_file_path(self, request, filename):
+
+        if not self.file_field or not self.model_class:
+            return filename
+
+        name, ext = os.path.splitext(filename)
+
+        instance = self.model_class()
+
+        field = instance._meta.get_field(self.file_field)
+
+        new_name = f"{name}-{uuid.uuid4().hex[:8]}{ext}"
+        relative_path = field.generate_filename(instance, new_name)
+        absolute_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+
+        while os.path.exists(absolute_path):
+            new_name = f"{name}-{uuid.uuid4().hex[:8]}{ext}"
+            relative_path = field.generate_filename(instance, new_name)
+            absolute_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+
+        return relative_path
 
     def is_valid_chunked_upload(self, chunked_upload):
         """

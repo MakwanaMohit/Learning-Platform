@@ -27,6 +27,8 @@ SECRET_KEY = 'django-insecure-57ubc@byhzecmz)08xy#4l&m$kz=h^1-gak-+zpn7n_gk_&6xt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+APPEND_SLASH = True
+
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -44,7 +46,6 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'accounts.apps.AccountsConfig',
     'student.apps.StudentConfig',
-    'django.contrib.admindocs',
     'mentor.apps.MentorConfig',
 ]
 

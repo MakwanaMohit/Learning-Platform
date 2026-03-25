@@ -6,14 +6,15 @@ from course.models import Tag, Category
 from course.views import CourseListView
 from course.views.CourseCreateUpdate import CourseCreateView, CreateTagCatView, CourseUpdateView, VideoUploadView, VideoCompleteView
 from course.views.CourseDetail import CourseDetailView
+from course.views.CreateUpdateChapter import ChapterCreateView, ChapterUpdateView
 
 from course.views.CreateUpdateUnit import UnitCreateView, UnitUpdateView
 from course.views.chapterList import ChapterListView
-from course.views.delete import CourseDeleteView, UnitDeleteView
+from course.views.delete import CourseDeleteView, UnitDeleteView, ChapterDeleteView
 
 
-def temp(request, course_slug, unit_slug):
-    return HttpResponse(f'<h1>{course_slug}</h1><h1>{unit_slug}</h1>')
+def temp(request, **kwargs):
+    return HttpResponse(''.join(f'<h1>{slg}</h1>'for slg in kwargs.values()))
 
 
 app_name = 'course'
@@ -34,6 +35,14 @@ urlpatterns = [
          CreateTagCatView.as_view(model=Category),
          name='create_category'
          ),
+    path("demo-video/upload/",
+         VideoUploadView.as_view(),
+         name="demo_video_upload"
+         ),
+    path("demo-video/complete/",
+         VideoCompleteView.as_view(),
+         name="demo_video_complete"
+         ),
     path('<slug:course_slug>/',
          CourseDetailView.as_view(),
          name='course_detail'
@@ -45,14 +54,6 @@ urlpatterns = [
     path('<slug:course_slug>/delete/',
          CourseDeleteView.as_view(),
          name='course_delete'
-         )
-    , path("demo-video/upload/",
-           VideoUploadView.as_view(),
-           name="demo_video_upload"
-           ),
-    path("demo-video/complete/",
-         VideoCompleteView.as_view(),
-         name="demo_video_complete"
          ),
     path('<slug:course_slug>/unit/create/',
          UnitCreateView.as_view(),
@@ -66,8 +67,24 @@ urlpatterns = [
          UnitDeleteView.as_view(),
          name="unit_delete"
          ),
-    path("<slug:course_slug>/unit/<slug:unit_slug>/chapters/",
+    path("<slug:course_slug>/unit/<slug:unit_slug>/chapter/",
          ChapterListView.as_view(),
          name="unit_chapter_list"
+         ),
+    path("<slug:course_slug>/unit/<slug:unit_slug>/chapter/create/",
+         ChapterCreateView.as_view(),
+         name="chapter_create"
+         ),
+    path("<slug:course_slug>/unit/<slug:unit_slug>/chapter/<slug:chapter_slug>/",
+         temp,
+         name="chapter_detail"
+         ),
+    path("<slug:course_slug>/unit/<slug:unit_slug>/chapter/<slug:chapter_slug>/change/",
+         ChapterUpdateView.as_view(),
+         name="chapter_change"
+         ),
+    path("<slug:course_slug>/unit/<slug:unit_slug>/chapter/<slug:chapter_slug>/delete/",
+         ChapterDeleteView.as_view(),
+         name="chapter_delete"
          ),
 ]

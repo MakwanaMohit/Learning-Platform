@@ -52,22 +52,11 @@ class CourseChangeAccessMixin:
             raise PermissionDenied("You do not have access to this course.")
         return course
 
-class CourseAccessMixin:
-    course_slug_url_kwarg = "course_slug"
-    course_queryset = Course.objects.all()
-
-    def get_object(self):
-        slug = self.kwargs.get(self.course_slug_url_kwarg)
-        course = get_object_or_404(self.course_queryset, slug=slug)
-        if not can_access_course(self.request.user, course):
-            raise PermissionDenied("You do not have access to this course.")
-        return course
-    
-class ChapterPageMixin:
+class ChapterChangeAccessMixin:
     def handle_no_permissions(self,request):
         return PermissionDenied("You Don't have permissions to access")
-    def dispatch(self, request, *args, **kwargs):
 
+    def get_object(self):
         self.chapter = get_object_or_404(
             Chapter.objects.select_related("unit__course").only(
                 "id", "name", "slug", "unit_id",
@@ -78,37 +67,43 @@ class ChapterPageMixin:
                 "unit__course__slug",
                 "unit__course__mentor_id",
             ),
-            slug=kwargs["chapter_slug"],
-            unit__slug=kwargs["unit_slug"],
-            unit__course__slug=kwargs["course_slug"],
+            slug=self.kwargs["chapter_slug"],
+            unit__slug=self.kwargs["unit_slug"],
+            unit__course__slug=self.kwargs["course_slug"],
         )
 
         self.unit = self.chapter.unit
         self.course = self.unit.course
 
+        return self.chapter
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
         if not is_course_owner(request.user, self.course):
             self.handle_no_permissions(request)
 
         return super().dispatch(request, *args, **kwargs)
 
-class UnitPageMixin:
+class UnitChangeAccessMixin:
     def handle_no_permissions(self,request):
         return PermissionDenied("You Don't have permissions to access")
-    
-    def dispatch(self, request, *args, **kwargs):
 
+    def get_object(self):
         self.unit = get_object_or_404(
             Unit.objects.select_related("course").only(
                 "id", "slug", "course_id",
                 "course__id", "course__slug", "course__mentor_id"
             ),
-            slug=kwargs["unit_slug"],
-            course__slug=kwargs["course_slug"],
+            slug=self.kwargs["unit_slug"],
+            course__slug=self.kwargs["course_slug"],
         )
-
         self.course = self.unit.course
+
+        return self.unit
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
 
         if not is_course_owner(request.user, self.course):
             self.handle_no_permissions(request)
-
         return super().dispatch(request, *args, **kwargs)

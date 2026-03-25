@@ -84,36 +84,9 @@ class CourseCreateView(LoginRequiredMixin, RoleRequiredMixin, CreateView):
             return response
 
         temp_file.close()
-
-        old_path = temp_file.name
-        original_name = file_name or os.path.basename(old_path)
-        name, ext = os.path.splitext(original_name)
-
-        field = instance._meta.get_field('demo_video')
-
-        new_name = original_name
-        new_rel_path = field.generate_filename(instance, new_name)
-        new_abs = os.path.join(settings.MEDIA_ROOT, new_rel_path)
-
-        old_abs = os.path.join(settings.MEDIA_ROOT, old_path)
-
-        while os.path.exists(new_abs):
-            new_name = f"{name}-{uuid.uuid4().hex[:6]}{ext}"
-            new_rel_path = field.generate_filename(instance, new_name)
-            new_abs = os.path.join(settings.MEDIA_ROOT, new_rel_path)
-
-        os.makedirs(os.path.dirname(new_abs), exist_ok=True)
-
-        try:
-            os.rename(old_abs, new_abs)
-        except Exception:
-            shutil.move(old_abs, new_abs)
-
-        instance.demo_video.name = new_rel_path
+        instance.demo_video.name = temp_obj.file.name
         instance.save(update_fields=["demo_video"])
-
-        temp_obj.delete()
-
+        temp_obj.delete(delete_file=False)
         return response
 
 class CourseUpdateView(LoginRequiredMixin, RoleRequiredMixin, CourseChangeAccessMixin, UpdateView):
@@ -151,41 +124,12 @@ class CourseUpdateView(LoginRequiredMixin, RoleRequiredMixin, CourseChangeAccess
 
         temp_file.close()
 
-        old_path = temp_file.name
-        original_name = file_name or os.path.basename(old_path)
-        nm, ext = os.path.splitext(original_name)
-
-        old_abs = os.path.join(settings.MEDIA_ROOT, old_path)
-
-        field = self.object._meta.get_field('demo_video')
-        new_relative = field.generate_filename(instance,f'{nm}{ext}')
-        new_abs = os.path.join(settings.MEDIA_ROOT,new_relative)
-        while os.path.exists(new_abs):
-            new_relative = field.generate_filename(instance,f'{nm}-{uuid.uuid4().hex[:6]}{ext}')
-
-            new_abs = os.path.join(settings.MEDIA_ROOT,new_relative)
-
-        os.makedirs(os.path.dirname(new_abs), exist_ok=True)
-
-
-        # ✅ MOVE file (fast + fallback safe)
-        try:
-            os.rename(old_abs, new_abs)
-        except Exception:
-            shutil.move(old_abs, new_abs)
-
-
-        # ✅ delete old video if updating
         if self.object and self.object.demo_video:
             self.object.demo_video.delete(save=False)
 
-        # ✅ assign moved file
-        instance.demo_video.name = new_relative
+        instance.demo_video.name = temp_obj.file.name
         instance.save(update_fields=["demo_video"])
-
-
-        # ✅ delete only DB entry (file already moved)
-        temp_obj.delete()
+        temp_obj.delete(delete_file=False)
 
         return response
 
@@ -195,6 +139,8 @@ class CourseUpdateView(LoginRequiredMixin, RoleRequiredMixin, CourseChangeAccess
 
 class VideoUploadView(ChunkedUploadView):
     field_name = "file"
+    file_field = 'demo_video'
+    model_class = Course
 
     def check_permissions(self, request):
         user = request.user
@@ -205,6 +151,9 @@ class VideoUploadView(ChunkedUploadView):
 class VideoCompleteView(ChunkedUploadCompleteView):
     do_md5_check = False
     response_data = {}
+    
+    file_field = 'demo_video'
+    model_class = Course
 
     def check_permissions(self, request):
         user = request.user

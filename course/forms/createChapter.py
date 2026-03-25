@@ -4,11 +4,11 @@ from course.models import Chapter
 class ChapterForm(forms.ModelForm):
     class Meta:
         model = Chapter
-        exclude = ["course", "created_at","slug"]
+        exclude = ["unit", "prerequisites","slug","created_at","updated_at"]
         widgets = {
-            "title": forms.TextInput(attrs={
+            "name": forms.TextInput(attrs={
                 "class": "form-control form-control-sm",
-                "placeholder": "Unit title",
+                "placeholder": "Chapter Name",
                 "style": "width:180px;"
             }),
             "order": forms.NumberInput(attrs={
