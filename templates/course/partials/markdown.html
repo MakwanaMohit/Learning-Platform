@@ -1,0 +1,30 @@
+<!-- partials/content/markdown.html -->
+{% load django_bootstrap5 %}
+<div id="content-body-{{ content.id }}">
+    <!-- PREVIEW -->
+    <div class="mb-3">
+        <h5>{{ content.title }}</h5>
+        <div class="markdown-body p-3 border rounded bg-white">
+            {{ content.rendered_html|safe }}
+        </div>
+    </div>
+    <hr>
+
+    <!-- FORM -->
+    <form method="post" id="change-content-form-{{ content.id }}">
+
+        {% csrf_token %}
+        {% bootstrap_form form %}
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" type="button"
+                    onclick="updateContent('{% url 'course:chapter_content_id_change' content.id %}','change-content-form-{{ content.id }}','content-card-{{ content.id }}')">
+                Update
+            </button>
+            <button class="btn btn-danger btn-sm" type="button"
+                    onclick="deleteContent('{% url 'course:chapter_content_id_delete' content.id %}','content-card-{{ content.id }}')">
+                Delete
+            </button>
+        </div>
+    </form>
+</div>

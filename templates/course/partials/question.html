@@ -1,0 +1,49 @@
+{% load django_bootstrap5 %}
+
+<div class="accordion mt-2" id="question-acc-{{ question.id }}">
+    <div class="accordion-item">
+
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#q-body-{{ question.id }}">
+                {{ question.title|default:"New Question" }}
+            </button>
+        </h2>
+
+        <div id="q-body-{{ question.id }}" class="accordion-collapse collapse"
+             data-bs-parent="#quizAccordion-{{ quiz.id }}">
+
+            <div class="accordion-body">
+
+                <!-- FORM -->
+                <h2>{{ question.question_type }}</h2>
+                <form id="question-update-{{ question.id }}">
+                    {% csrf_token %}
+                    {% bootstrap_form question.form %}
+                    <input type="hidden" name="update_type"
+                           value="{% if question.question_type == 'numeric' %}numeric{% else %}question{% endif %}">
+                    <input type="hidden" name="question_id" value="{{ question.id }}">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-primary" type="button"
+                                onclick="updateContent('{% url 'course:chapter_quiz_change' quiz.id %}','question-update-{{ question.id }}','question-acc-{{ question.id }}',{{ question.id }})">
+                            Update
+                        </button>
+                        <button class="btn btn-danger btn-sm" type="button"
+                                onclick="deleteContent('{% url 'course:chapter_content_id_delete' quiz.id %}','question-acc-{{ question.id }}','question','question-preview-{{ question.id }}',{{ question.id }})">
+                            Delete Question
+                        </button>
+                    </div>
+                </form>
+
+                <!-- TYPE -->
+                {% if question.question_type != "numeric" %}
+                    {% include "course/partials/choices.html" %}
+                {% endif %}
+
+
+            </div>
+
+        </div>
+    </div>
+</div>

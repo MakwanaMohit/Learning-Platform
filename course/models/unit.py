@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.utils.text import slugify
 
 
@@ -19,14 +20,9 @@ class Unit(models.Model):
     )
 
     description = models.TextField(blank=True)
-
     order = models.PositiveIntegerField()
-
     duration = models.DurationField(null=True, blank=True)
-
-    is_preview = models.BooleanField(default=False)
     is_locked = models.BooleanField(default=False)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -47,6 +43,9 @@ class Unit(models.Model):
             models.Index(fields=["course", "order"]),
             models.Index(fields=["course", "slug"]),
         ]
+
+    def get_absolute_url(self):
+        return reverse("course:unit_chapter_list", kwargs={"course_slug": self.course.slug,"unit_slug": self.slug})
 
     def save(self, *args, **kwargs):
         if not self.slug:

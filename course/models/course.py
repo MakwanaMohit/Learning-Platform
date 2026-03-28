@@ -75,6 +75,7 @@ class Course(models.Model):
         validators=[validate_video],
         blank=True,
         null=True,
+        max_length=255
     )
 
     category = models.ForeignKey(

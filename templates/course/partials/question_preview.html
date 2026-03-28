@@ -1,0 +1,22 @@
+{% load django_bootstrap5 %}
+<div class="mb-2" id="question-preview-{{ question.id }}">
+    <strong>Q{{ question.order }}. {{ question.title }}</strong>
+    <div class="markdown-body p-3 border rounded bg-white col-4">
+        {{ question.rendered_html|safe }}
+    </div>
+    <div class="col-4">{% if question.image %}
+        <img src="{{ question.image.url }}" class="img-fluid" alt="question-id-{{ question.id }}">
+    {% endif %}</div>
+
+    {% if question.question_type == "numeric" %}
+        <div class="text-muted">Numeric Answer Range: ( {{ question.numeric_answer.min_value }} <= value )
+            <= {{ question.numeric_answer.max_value }} )
+        </div>
+    {% else %}
+        <ul>
+            {% for choice in question.choices.all %}
+                <li id="choice-preview-{{ choice.id }}">{{ choice.text }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>

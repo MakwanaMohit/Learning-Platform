@@ -1,0 +1,14 @@
+<!-- partials/content/choices.html -->
+{% load django_bootstrap5 %}
+<div id="choice-list-{{ question.id }}" class="mt-3">
+
+    {% for choice in question.choices_copy %}
+        {% include "course/partials/choice.html" %}
+    {% endfor %}
+
+</div>
+
+<button class="btn btn-success btn-sm mt-2"
+        onclick="addChoices('{% url 'course:chapter_quiz_add' quiz.id %}',{{ quiz.id }},{{ question.id }})">
+    + Add Choice
+</button>

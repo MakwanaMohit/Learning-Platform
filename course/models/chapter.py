@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils.text import slugify
 
 
 class Chapter(models.Model):
@@ -37,8 +38,6 @@ class Chapter(models.Model):
         related_name="required_for"
     )
 
-    # Publishing control
-    is_published = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -46,13 +45,11 @@ class Chapter(models.Model):
     class Meta:
         ordering = ["order"]
         unique_together = [
-            ("unit", "order"),
             ("unit", "slug"),
         ]
         indexes = [
             models.Index(fields=["unit", "order"]),
             models.Index(fields=["unit", "slug"]),
-            models.Index(fields=["is_published"]),
         ]
 
     def __str__(self):
@@ -60,10 +57,37 @@ class Chapter(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "chapter_detail",
+            "course:chapter_detail",
             kwargs={
                 "course_slug": self.unit.course.slug,
-                "unit_order": self.unit.order,
+                "unit_slug": self.unit.slug,
                 "chapter_slug": self.slug,
             },
         )
+
+    def get_change_content_url(self):
+        return reverse(
+            "course:chapter_content_change",
+            kwargs={
+                "course_slug": self.unit.course.slug,
+                "unit_slug": self.unit.slug,
+                "chapter_slug": self.slug,
+            },
+        )
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while Chapter.objects.filter(
+                unit=self.unit ,
+                slug=slug
+            ).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)

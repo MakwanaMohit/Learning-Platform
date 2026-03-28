@@ -1,0 +1,310 @@
+{% extends "course/base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+    {{ course.title }} | {{ unit.title }} | {{ chapter.name }}
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+
+        <!-- UNIT CARD -->
+        <div class="card mb-4" id="">
+            <div class="card-body">
+
+                <div id="unit-display-{{ unit.id }}">
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div id="unit-content" class="mb-3">
+                            <a href="{{ course.get_absolute_url }}" class="text-decoration-none">
+                                <h5 class="mb-1 text-primary fw-semibold">
+                                    {{ course.title }}
+                                </h5>
+                            </a>
+                            <a href="{{ unit.get_absolute_url }}" class="text-decoration-none">
+                                <h5 class="mb-1 text-primary fw-semibold">
+                                    {{ course.title }}
+                                </h5>
+                            </a>
+                            <h5 class="mb-1">
+                                {{ unit.order }}. {{ unit.title }}
+                            </h5>
+
+                            <p class="text-muted mb-1">
+                                {{ unit.description }}
+                            </p>
+
+                            <small class="text-muted">
+                                Duration: {{ unit.duration|default:"Not specified" }}
+                            </small>
+                        </div>
+
+                        {% if is_mentor %}
+                            <div class="d-flex flex-column gap-2">
+
+                                <!-- Edit -->
+                                <button class="btn btn-sm btn-primary w-100"
+                                        onclick="editUnit('{% url 'course:unit_change' course.slug unit.slug %}')">
+                                    Edit
+                                </button>
+
+                                <!-- Delete -->
+                                <div class="d-flex gap-2">
+                                    <input type="text"
+                                           id="confirm-unit-delete"
+                                           class="form-control form-control-sm"
+                                           placeholder="Type unit name">
+
+                                    <button class="btn btn-sm btn-danger"
+                                            onclick="deleteUnit()">
+                                        Delete
+                                    </button>
+                                </div>
+
+                            </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- CHAPTERS -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Chapters</h5>
+
+                {% if is_mentor %}
+                    <button class="btn btn-sm btn-success"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#createChapterCollapse">
+                        + Create Chapter
+                    </button>
+                {% endif %}
+            </div>
+
+            {% if is_mentor %}
+                <div class="collapse border-bottom" id="createChapterCollapse">
+                    <div class="card-body">
+
+                        <form method="post"
+                              action="{% url 'course:chapter_create' course.slug unit.slug %}">
+                            {% csrf_token %}
+
+                            {% bootstrap_form chapter_form %}
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#createChapterCollapse">
+                                    Cancel
+                                </button>
+
+                                <button type="submit" class="btn btn-success">
+                                    Create Chapter
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- LIST -->
+            <div class="list-group list-group-flush">
+                {% for chapter in chapters %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center"
+                         id="chapter-{{ chapter.id }}">
+
+                        <div>
+                            <h6 class="mb-1">
+                                {{ chapter.order }}. {{ chapter.name }}
+                            </h6>
+
+                            {% if chapter.description %}
+                                <p class="mb-1 text-muted small">
+                                    {{ chapter.description|truncatechars:100 }}
+                                </p>
+                            {% endif %}
+
+                            <small class="text-muted">
+                                {% if chapter.duration %}
+                                    Duration: {{ chapter.duration }}
+                                {% endif %}
+                            </small>
+
+                            <div class="mt-1">
+                                {% if chapter.is_preview %}
+                                    <span class="badge bg-info">Preview</span>
+                                {% endif %}
+                                {% if chapter.is_locked %}
+                                    <span class="badge bg-danger">Locked</span>
+                                {% endif %}
+                                {% if chapter.is_compulsory %}
+                                    <span class="badge bg-warning text-dark">Compulsory</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-2">
+
+                            <!-- Top Row -->
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'course:chapter_detail' course.slug unit.slug chapter.slug %}"
+                                   class="btn btn-sm btn-outline-primary w-50">
+                                    Open
+                                </a>
+
+                                <button class="btn btn-sm btn-primary w-50"
+                                        onclick="editChapter('{% url 'course:chapter_change' course.slug unit.slug chapter.slug %}', 'chapter-{{ chapter.id }}')">
+                                    Edit
+                                </button>
+                            </div>
+
+                            <!-- Bottom Row -->
+                            <div class="d-flex gap-2">
+                                <input type="text"
+                                       class="form-control form-control-sm"
+                                       placeholder="Type unit name"
+                                        id="chapter-delete-input-{{ chapter.id }}">
+
+                                <button class="btn btn-sm btn-danger" onclick="deleteChapter('{% url 'course:chapter_delete' course.slug unit.slug chapter.slug %}','{{ chapter.id }}','{{ chapter.name }}')">
+                                    Delete
+                                </button>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-center text-muted">
+                        No chapters found
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
+
+
+{% block js %}
+    <script>
+
+        function editUnit(url) {
+            fetch(`${url}?page-redirect=true`, {
+                method: "GET",
+                headers: {"X-Requested-With": "XMLHttpRequest"}
+            })
+                .then(res => res.text())
+                .then(html => {
+                    const container = document.getElementById('unit-content');
+
+                    if (!container) {
+                        console.error("unit-content not found");
+                        return;
+                    }
+
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Edit error:", err);
+                    alert("Failed to load edit form");
+                });
+        }
+
+
+        function deleteUnit() {
+            const input = document.getElementById('confirm-unit-delete');
+            const name = input.value.trim();
+
+            if (!name) {
+                alert("Please enter unit name to confirm");
+                return;
+            }
+
+            if (name !== '{{ unit.title }}') {
+                alert("Entered name does not match");
+                return;
+            }
+
+            fetch('{% url 'course:unit_delete' course.slug unit.slug %}', {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": '{{ csrf_token }}',
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "confirm_name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '{% url 'course:course_detail' course.slug %}';
+                    } else {
+                        alert(data.error || "Error deleting unit");
+                    }
+                })
+                .catch(err => {
+                    console.error("Delete error:", err);
+                    alert("Something went wrong");
+                });
+        }
+
+
+        function editChapter(url, chapterId) {
+            fetch(url, {
+                method: "GET",
+                headers: {"X-Requested-With": "XMLHttpRequest"}
+            })
+                .then(res => res.text())
+                .then(html => {
+                    const container = document.getElementById(chapterId);
+
+                    if (!container) {
+                        console.error("Chapter container not found:", chapterId);
+                        return;
+                    }
+
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Chapter edit error:", err);
+                });
+        }
+        function deleteChapter(deleteUrl, chapterId,chapterName) {
+            let input = document.getElementById(`chapter-delete-input-${chapterId}`);
+            let name = input.value;
+
+            if (!name) {
+                alert("Please enter chapter name to confirm");
+                return;
+            }
+
+            if (name !== chapterName) {
+                alert("Entered name does not match");
+                return;
+            }
+            fetch(deleteUrl, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "confirm_name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById(`chapter-${chapterId}`).remove();
+                    } else {
+                        alert(data.error || "Error deleting unit");
+                    }
+                });
+        }
+
+
+    </script>
+{% endblock %}

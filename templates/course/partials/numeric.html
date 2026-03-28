@@ -1,0 +1,13 @@
+<!-- partials/content/numeric.html -->
+{% load django_bootstrap5 %}
+<div class="mt-3">
+    <form onsubmit="updateNumeric(event, '{{ question.id }}')">
+
+        {% csrf_token %}
+        {% bootstrap_form question.numeric_form %}
+
+        <button class="btn btn-sm btn-primary">
+            Update Answer
+        </button>
+    </form>
+</div>

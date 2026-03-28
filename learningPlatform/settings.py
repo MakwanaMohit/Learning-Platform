@@ -27,6 +27,8 @@ SECRET_KEY = 'django-insecure-57ubc@byhzecmz)08xy#4l&m$kz=h^1-gak-+zpn7n_gk_&6xt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+APPEND_SLASH = True
+
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -38,12 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django_bootstrap5',
+    'chunked_upload',
     'django.contrib.staticfiles',
     'course.apps.CourseConfig',
     'core.apps.CoreConfig',
     'accounts.apps.AccountsConfig',
     'student.apps.StudentConfig',
-    'django.contrib.admindocs',
     'mentor.apps.MentorConfig',
 ]
 
@@ -76,7 +78,8 @@ TEMPLATES = [
 ]
 MEDIA_ROOT = BASE_DIR / "media"
 PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
-
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024
 # Authentication part
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -143,5 +146,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_URL = '/static/'
+# STATIC_ROOT = BASE_DIR / 'static'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
