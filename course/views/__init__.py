@@ -1,9 +1,6 @@
 from student.models import Enrollment
-from .CourseIndex import CourseListView
 from course.models import Course, Unit, Chapter
 from accounts.models import User
-
-
 
 def is_course_owner(user: User, course: Course) -> bool:
     if not user.is_authenticated or user.role != 'mentor':

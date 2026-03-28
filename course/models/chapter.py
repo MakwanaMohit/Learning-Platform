@@ -57,10 +57,20 @@ class Chapter(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "chapter_detail",
+            "course:chapter_detail",
             kwargs={
                 "course_slug": self.unit.course.slug,
-                "unit_order": self.unit.order,
+                "unit_slug": self.unit.slug,
+                "chapter_slug": self.slug,
+            },
+        )
+
+    def get_change_content_url(self):
+        return reverse(
+            "course:chapter_content_change",
+            kwargs={
+                "course_slug": self.unit.course.slug,
+                "unit_slug": self.unit.slug,
                 "chapter_slug": self.slug,
             },
         )

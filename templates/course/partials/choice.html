@@ -1,0 +1,26 @@
+{% load django_bootstrap5 %}
+<div id="question-choice-{{ choice.id }}">
+    <form class="d-flex align-items-start gap-2 mb-2" id="choice-form-{{ choice.id }}">
+
+        {% csrf_token %}
+
+        <div class="flex-grow-1">
+            {% bootstrap_form choice.form size="sm" %}
+            <input type="hidden" name="update_type" value="choice">
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+            <input type="hidden" name="choice_id" value="{{ choice.id }}">
+        </div>
+
+        <div>
+            <button class="btn btn-sm btn-primary" type="button"
+                    onclick="updateContent('{% url 'course:chapter_quiz_change' quiz.id %}','choice-form-{{ choice.id }}','question-choice-{{ choice.id }}',{{ question.id }})">
+                Update
+            </button>
+            <button class="btn btn-danger btn-sm" type="button"
+                    onclick="deleteContent('{% url 'course:chapter_content_id_delete' quiz.id %}','question-choice-{{ choice.id }}','choice','choice-preview-{{ choice.id }}',{{ question.id }},{{ choice.id }})">
+                Delete Choice
+            </button>
+        </div>
+
+    </form>
+</div>

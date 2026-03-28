@@ -88,3 +88,39 @@ class VideoContent(ChapterContent):
 
     def __str__(self):
         return self.title
+
+class Assignment(ChapterContent):
+    title = models.CharField(max_length=255)
+
+
+    def save(self, *args, **kwargs):
+        self.content_type = self.ContentType.ASSIGNMENT
+        super().save(*args, **kwargs)
+
+class AssignmentFile(models.Model):
+    assignment = models.ForeignKey(
+        Assignment,
+        on_delete=models.CASCADE,
+        related_name="files",
+        db_index=True
+    )
+
+    file = models.FileField(upload_to="assignments/")
+    file_name = models.CharField(max_length=255)
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["assignment", "file_name"],
+                name="unique_assignment_filename"
+            )
+        ]
+        indexes = [
+            models.Index(fields=["assignment"]),
+            models.Index(fields=["file_name"]),
+        ]
+
+    def __str__(self):
+        return f"{self.assignment_id} - {self.file_name}"
