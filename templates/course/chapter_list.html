@@ -1,0 +1,193 @@
+{% extends "course/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+
+        <!-- ✅ UNIT HEADER -->
+        <div class="card mb-4" id="unit-{{ unit.id }}">
+            <div class="card-body">
+
+                <!-- Display mode -->
+                <div id="unit-display-{{ unit.id }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div id="unit-content" class="mb-3">
+                            <p class="mb-1 text-primary fw-semibold">
+                                {{ course.title }}
+                            </p>
+
+                            <!-- Order + Title -->
+                            <h5 class="mb-1">
+                                {{ unit.order }}. {{ unit.title }}
+                            </h5>
+
+                            <!-- Description -->
+                            <p class="text-muted mb-1">
+                                {{ unit.description }}
+                            </p>
+
+                            <!-- Duration -->
+                            <small class="text-muted">
+                                Duration: {{ unit.duration|default:"Not specified" }}
+                            </small>
+                        </div>
+
+                        {% if is_mentor %}
+                            <div class="d-flex flex-column gap-2">
+
+                            <!-- First Row -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <button class="btn btn-sm btn-primary w-100"
+                                            onclick="editUnit('{% url 'course:unit_change' course.slug unit.slug %}', '{{ unit.id }}')">
+                                        Edit
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Second Row -->
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <input type="text"
+                                           id="confirm-unit-delete"
+                                           class="form-control form-control-sm"
+                                           placeholder="Type unit name">
+                                </div>
+                                <div class="col-4">
+                                    <button class="btn btn-sm btn-danger w-100" onclick="deleteUnit()">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>{% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ✅ CHAPTER LIST -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Chapters</h5>
+            </div>
+
+            <div class="list-group list-group-flush">
+
+                {% for chapter in chapters %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <h6 class="mb-1">
+                                {{ chapter.order }}. {{ chapter.name }}
+                            </h6>
+
+                            {% if chapter.description %}
+                                <p class="mb-1 text-muted small">
+                                    {{ chapter.description|truncatechars:100 }}
+                                </p>
+                            {% endif %}
+
+                            <small class="text-muted">
+                                {% if chapter.duration %}
+                                    Duration: {{ chapter.duration }}
+                                {% endif %}
+                            </small>
+
+                            <div class="mt-1">
+                                {% if chapter.is_preview %}
+                                    <span class="badge bg-info">Preview</span>
+                                {% endif %}
+
+                                {% if chapter.is_locked %}
+                                    <span class="badge bg-danger">Locked</span>
+                                {% endif %}
+
+                                {% if chapter.is_compulsory %}
+                                    <span class="badge bg-warning text-dark">Compulsory</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <a href="{% url 'chapter_detail' course.slug unit.slug chapter.slug %}"
+                               class="btn btn-sm btn-outline-primary">
+                                Open
+                            </a>
+                        </div>
+
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-center text-muted">
+                        No chapters found
+                    </div>
+                {% endfor %}
+
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
+
+
+{% block js %}
+    <script>
+
+        function editUnit(url,) {
+
+            fetch(`${url}?unit-page-redirect=true`, {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+        .then(res => res.text())
+                .then(html => {
+                    let container = document.getElementById('unit-content');
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Edit error:", err);
+                    alert("Failed to load edit form");
+                });
+        }
+
+        function deleteUnit() {
+            let input = document.getElementById('confirm-unit-delete');
+            let name = input.value.trim();
+            console.log('this is running');
+
+            // 🔒 validation
+            if (!name) {
+                alert("Please enter unit name to confirm");
+                return;
+            }
+
+            if (name !== '{{ unit.title}}') {
+                alert("Entered name does not match");
+                return;
+            }
+
+            fetch('{% url 'course:unit_delete' course.slug unit.slug%}', {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": '{{ csrf_token }}',
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "confirm_name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '{% url 'course:course_detail' course.slug %}';
+                    } else {
+                        alert(data.error || "Error deleting unit");
+                    }
+                })
+                .catch(err => {
+                    console.error("Delete error:", err);
+                    alert("Something went wrong");
+                });
+        }
+    </script>
+{% endblock %}

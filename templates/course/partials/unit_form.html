@@ -1,0 +1,19 @@
+{% load django_bootstrap5 %}
+
+<form method="post" action="{{ url }}">
+    {% csrf_token %}
+
+    {% bootstrap_form form %}
+
+    {% if unit_page_redirect %}<input type="hidden" name="unit-page-redirect" value="true">{% endif %}
+
+    <button type="submit" class="btn btn-sm btn-success">
+        Save Changes
+    </button>
+
+    <button type="button"
+            class="btn btn-sm btn-secondary"
+            onclick="location.reload()">
+        Cancel
+    </button>
+</form>
