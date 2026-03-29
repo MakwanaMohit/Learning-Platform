@@ -58,10 +58,13 @@ class CourseListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
         context["categories"] = Category.objects.all()
         context["tags"] = Tag.objects.all()
         context['catset'] = self.catSet
         context['tagset'] = self.tagSet
         context['catqueryset'] = context['categories'].filter(slug__in=self.catSet)
         context['tagqueryset'] = context['tags'].filter(slug__in=self.tagSet)
+        context['query_string'] =  query_params.urlencode().strip()
         return context

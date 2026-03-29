@@ -64,14 +64,14 @@ class ChapterUpdateView(LoginRequiredMixin, RoleRequiredMixin, ChapterChangeAcce
 
     # 🔹 POST → normal update
     def form_valid(self, form):
-        messages.success(self.request, "Unit updated successfully")
+        messages.success(self.request, "Chapter updated successfully")
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        messages.error(self.request, "Error updating unit")
+        messages.error(self.request, "Error updating Chapter")
         return super().form_invalid(form)
 
     def get_success_url(self):
         if self.request.POST.get("page-redirect"):
-            return self.chapter.get_absolute_url()
+            return self.chapter.get_change_content_url()
         return self.unit.get_absolute_url()
