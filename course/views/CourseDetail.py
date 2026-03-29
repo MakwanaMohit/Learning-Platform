@@ -6,10 +6,10 @@ from accounts.views import RoleRequiredMixin
 from course.forms.createUnit import UnitForm
 from course.models import Course, Unit, Chapter
 from course.views import is_course_owner
-from course.views.mixins import CourseAccessMixin
+from course.views.mixins import CourseChangeAccessMixin
 
 
-class CourseDetailView(CourseAccessMixin,DetailView):
+class CourseDetailView(CourseChangeAccessMixin,DetailView):
     model = Course
     slug_url_kwarg = "course_slug"
     context_object_name = "course"

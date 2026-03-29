@@ -1,6 +1,7 @@
 from django.views.generic import ListView
 from django.shortcuts import get_object_or_404
 
+from course.forms.createChapter import ChapterForm
 from course.models import Chapter, Unit
 from course.views import can_access_unit, is_course_owner
 
@@ -8,6 +9,7 @@ from course.views import can_access_unit, is_course_owner
 class ChapterListView(ListView):
     model = Chapter
     context_object_name = "chapters"
+    template_name = 'course/chapter_list.html'
 
     def get_queryset(self):
         user = self.request.user
@@ -54,4 +56,6 @@ class ChapterListView(ListView):
         context["unit"] = self.unit
         context["course"] = self.unit.course
         context['is_mentor'] = is_course_owner(self.request.user, self.unit.course)
+        context['chapter_form'] = ChapterForm()
+        context['chapter_form'].initial['order'] = self.unit.chapters.count() + 1
         return context
