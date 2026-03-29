@@ -6,68 +6,48 @@ from django.shortcuts import get_object_or_404
 
 from accounts.views import RoleRequiredMixin
 from course.forms import UnitForm
-from course.models import Course, Unit
+from course.forms.createChapter import ChapterForm
+from course.models import Course, Unit, Chapter
 from course.views import is_course_owner
-from django.views.generic import UpdateView
+from django.views.generic import UpdateView, CreateView
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
-from course.views.mixins import UnitPageMixin,CourseUnitMixin,CourseUnitChapterMixin
+from course.views.mixins import UnitChangeAccessMixin, ChapterChangeAccessMixin
 
 
-class ChapterCreateView(CourseUnitMixin,View):
+class ChapterCreateView(UnitChangeAccessMixin, CreateView):
+    model = Chapter
+    form_class = ChapterForm
+    template_name = "course/chapter_form.html"
 
-    def post(self, request, course_slug):
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['order'] = self.unit.chapters.count() + 1
+        return initial
 
-        form = ChapterForm(request.POST)
+    def form_valid(self, form):
+        form.instance.unit = self.unit
+        response =  super().form_valid(form)
+        messages.success(self.request, "Chapter created successfully")
+        return response
 
-        if form.is_valid():
-            unit = form.save(commit=False)
-            course = unit.course
+    def get_success_url(self):
+        return self.unit.get_absolute_url()
 
-            if unit.order is None:
-                unit.order = (
-                    Unit.objects
-                    .filter(course=course)
-                    .count() + 1
-                )
-            if unit.order < 0:
-                unit.order = 0
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'unit': self.unit,'course':self.course})
+        return context
 
-
-            unit.save()
-
-            return JsonResponse({
-                "id": unit.id,
-                "title": unit.title,
-                "slug": unit.slug,
-                "order": unit.order
-            })
-
-        return JsonResponse({"errors": form.errors}, status=400)
-
-
-
-
-class UnitUpdateView(LoginRequiredMixin, RoleRequiredMixin,  UnitPageMixin, UpdateView):
-    model = Unit
-    form_class = UnitForm
+class ChapterUpdateView(LoginRequiredMixin, RoleRequiredMixin, ChapterChangeAccessMixin, UpdateView):
+    model = Chapter
+    form_class = ChapterForm
     allowed_roles = ["mentor"]
 
-    def get_object(self, queryset=None):
-        return super().get_object()
-
-    def dispatch(self, request, *args, **kwargs):
-
-        if not is_course_owner(request.user, self.course):
-            raise PermissionDenied("Not allowed")
-
-        return super().dispatch(request, *args, **kwargs)
-
-    # 🔹 AJAX GET → return rendered form
     def get(self, request, *args, **kwargs):
         form = self.get_form()
 
@@ -75,8 +55,8 @@ class UnitUpdateView(LoginRequiredMixin, RoleRequiredMixin,  UnitPageMixin, Upda
             "course/partials/unit_form.html",
             {
                 "form": form,
-                "url" : reverse('course:unit_change',kwargs={"course_slug":self.course.slug,"unit_slug":self.unit.slug}),
-                "unit_page_redirect":request.GET.get("unit-page-redirect",False)
+                "url" : reverse('course:chapter_change',kwargs={"course_slug":self.course.slug,"unit_slug":self.unit.slug,"chapter_slug":self.chapter.slug}),
+                "page_redirect":request.GET.get("page-redirect",False)
             },
             request=request
         )
@@ -92,6 +72,6 @@ class UnitUpdateView(LoginRequiredMixin, RoleRequiredMixin,  UnitPageMixin, Upda
         return super().form_invalid(form)
 
     def get_success_url(self):
-        if self.request.POST.get("unit-page-redirect"):
-            return self.unit.get_absolute_url()
-        return self.course.get_absolute_url()
+        if self.request.POST.get("page-redirect"):
+            return self.chapter.get_absolute_url()
+        return self.unit.get_absolute_url()

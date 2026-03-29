@@ -31,6 +31,15 @@
             let input = document.getElementById(`confirm-unit-${unitId}`);
             let name = input.value;
 
+            if (!name) {
+                alert("Please enter unit name to confirm");
+                return;
+            }
+
+            if (name !== '{{ unit.title }}') {
+                alert("Entered name does not match");
+                return;
+            }
             fetch(deleteUrl, {
                 method: "POST",
                 headers: {
@@ -49,19 +58,6 @@
                 });
         }
 
-        function edixxtUnit(url, unitId) {
-            fetch(url, {
-                method: "GET",
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            })
-                .then(res => res.text())
-                .then(html => {
-                    let container = document.querySelector(`#collapse${unitId} .accordion-body`);
-                    container.innerHTML = html;
-                });
-        }
 
         function editUnit(url, unitId) {
             fetch(url, {
@@ -251,7 +247,8 @@
                                     </button>
 
                                     <!-- RIGHT: Actions (OUTSIDE button) -->
-                                    <a href="{{ unit.get_absolute_url }}" class="btn btn-sm btn-outline-primary">View</a>
+                                    <a href="{{ unit.get_absolute_url }}"
+                                       class="btn btn-sm btn-outline-primary">View</a>
                                     {% if is_mentor %}
                                         <div class="d-flex align-items-center gap-2 px-3">
                                             <button type="button"
@@ -284,8 +281,9 @@
 
                                             {% for chapter in unit.chapters.all %}
                                                 <li class="list-group-item py-1 px-2 border-0">
-                                                    <a href="#" class="text-decoration-none small">
-                                                        ▶ {{ chapter.title }}
+                                                    <a href="{% url 'course:chapter_detail' course.slug unit.slug chapter.slug %}"
+                                                       class="text-decoration-none small">
+                                                        ▶ {{ chapter.name }}
                                                     </a>
                                                 </li>
                                             {% empty %}

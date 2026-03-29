@@ -15,7 +15,7 @@ from django.core.exceptions import PermissionDenied
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
-from course.views.mixins import UnitPageMixin
+from course.views.mixins import UnitChangeAccessMixin
 
 
 class UnitCreateView(View):
@@ -59,20 +59,10 @@ class UnitCreateView(View):
 
 
 
-class UnitUpdateView(LoginRequiredMixin, RoleRequiredMixin,  UnitPageMixin, UpdateView):
+class UnitUpdateView(LoginRequiredMixin, RoleRequiredMixin, UnitChangeAccessMixin, UpdateView):
     model = Unit
     form_class = UnitForm
     allowed_roles = ["mentor"]
-
-    def get_object(self, queryset=None):
-        return super().get_object()
-
-    def dispatch(self, request, *args, **kwargs):
-
-        if not is_course_owner(request.user, self.course):
-            raise PermissionDenied("Not allowed")
-
-        return super().dispatch(request, *args, **kwargs)
 
     # 🔹 AJAX GET → return rendered form
     def get(self, request, *args, **kwargs):
@@ -83,22 +73,13 @@ class UnitUpdateView(LoginRequiredMixin, RoleRequiredMixin,  UnitPageMixin, Upda
             {
                 "form": form,
                 "url" : reverse('course:unit_change',kwargs={"course_slug":self.course.slug,"unit_slug":self.unit.slug}),
-                "unit_page_redirect":request.GET.get("unit-page-redirect",False)
+                "page_redirect":request.GET.get("page-redirect",False)
             },
             request=request
         )
         return HttpResponse(html)
 
-    # 🔹 POST → normal update
-    def form_valid(self, form):
-        messages.success(self.request, "Unit updated successfully")
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(self.request, "Error updating unit")
-        return super().form_invalid(form)
-
     def get_success_url(self):
-        if self.request.POST.get("unit-page-redirect"):
+        if self.request.POST.get("page-redirect"):
             return self.unit.get_absolute_url()
         return self.course.get_absolute_url()
