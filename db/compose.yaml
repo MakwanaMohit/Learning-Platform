@@ -1,0 +1,41 @@
+
+services:
+  db:
+    image: postgres:16
+    container_name: learning-db
+    restart: always
+    environment:
+      POSTGRES_USER: mohit
+      POSTGRES_PASSWORD: hello
+      POSTGRES_DB: learning_platform
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer:latest
+    container_name: learning-adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: learning-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_data:
+  pgadmin_data:

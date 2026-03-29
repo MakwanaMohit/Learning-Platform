@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body>
+
+<h2>User Registration</h2>
+
+<!-- Messages -->
+{% if messages %}
+    <div>
+        {% for message in messages %}
+            <div style="padding:10px; margin-bottom:10px;
+                        border:1px solid #ccc;
+                        color:
+                        {% if message.tags == 'error' %}red
+                        {% elif message.tags == 'success' %}green
+                        {% else %}black
+                        {% endif %};">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label>Username</label><br>
+        {{ form.username }}
+        <div style="color:red;">{{ form.username.errors }}</div>
+    </div>
+
+    <div>
+        <label>First Name</label><br>
+        {{ form.first_name }}
+        <div style="color:red;">{{ form.first_name.errors }}</div>
+    </div>
+
+    <div>
+        <label>Last Name</label><br>
+        {{ form.last_name }}
+        <div style="color:red;">{{ form.last_name.errors }}</div>
+    </div>
+
+    <div>
+        <label>Email</label><br>
+        {{ form.email }}
+        <div style="color:red;">{{ form.email.errors }}</div>
+    </div>
+
+    <div>
+        <label>Role</label><br>
+        {{ form.role }}
+        <div style="color:red;">{{ form.role.errors }}</div>
+    </div>
+
+    <div>
+        <label>Password</label><br>
+        {{ form.password1 }}
+        <div style="color:red;">{{ form.password1.errors }}</div>
+    </div>
+
+    <div>
+        <label>Confirm Password</label><br>
+        {{ form.password2 }}
+        <div style="color:red;">{{ form.password2.errors }}</div>
+    </div>
+
+    <br>
+
+    <button type="submit">Register</button>
+
+</form>
+
+<br>
+
+<p>
+    Already have an account?
+    <a href="{% url 'accounts:login' %}">Login</a>
+</p>
+
+</body>
+</html>
