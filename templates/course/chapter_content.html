@@ -1,0 +1,451 @@
+{% extends "course/base.html" %}
+{% load content_tags %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+    {{ course.title }} | {{ unit.title }} | {{ chapter.name }}
+{% endblock %}
+{% block content %}
+
+    <div class="container mt-4">
+
+        <div class="card mb-4" id="chapter-card-{{ chapter.id }}">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div id="chapter-content">
+
+                        <a href="{{ course.get_absolute_url }}" class="text-decoration-none">
+                            <h5 class="text-primary fw-semibold mb-1">
+                                {{ course.title }}
+                            </h5>
+                        </a>
+
+                        <a href="{{ unit.get_absolute_url }}" class="text-decoration-none">
+                            <h6 class="text-primary mb-1">
+                                Unit {{ unit.order }}: {{ unit.title }}
+                            </h6>
+                        </a>
+
+                        <h5 class="mb-1">
+                            Ch{{ chapter.order }}: {{ chapter.name }}
+                        </h5>
+
+                        <p class="text-muted mb-1">
+                            {{ chapter.description|default:"No description available." }}
+                        </p>
+
+                    </div>
+
+                    <div class="d-flex flex-column gap-2">
+
+                        <!-- Edit -->
+                        <button class="btn btn-sm btn-primary w-100"
+                                onclick="editChapter('{% url 'course:chapter_change' course.slug unit.slug chapter.slug %}')">
+                            Edit
+                        </button>
+
+                        <!-- Delete -->
+                        <div class="d-flex gap-2">
+                            <input type="text"
+                                   id="confirm-chapter-delete"
+                                   class="form-control form-control-sm"
+                                   placeholder="Type unit name">
+
+                            <button class="btn btn-sm btn-danger"
+                                    onclick="deleteChapter()">
+                                Delete
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <div id="chapter-content-list">
+
+            {% for content in chapter.contents.all %}
+                <div class="card mb-3 content-card"
+                     id="content-card-{{ content.id }}">
+
+                    <div class="card-body"
+                         id="content-body-{{ content.id }}">
+
+                        {% render_content content %}
+
+                    </div>
+
+                </div>
+            {% empty %}
+                <div class="text-muted text-center py-4">
+                    No content added yet.
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="row mt-3">
+            <!-- Select Dropdown: 8 columns -->
+            <div class="col-8">
+                <select id="add-type" class="form-select">
+                    {% for value, label in types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Button: 4 columns -->
+            <div class="col-4">
+                <button class="btn btn-success w-100" onclick="addContent()">
+                    + Add Content
+                </button>
+            </div>
+        </div>
+        <br><br><br>
+        <br><br><br>
+    </div>
+
+{% endblock %}
+{% block js %}
+    <link href="{% static "uppy/core_style.min.css" %}" rel="stylesheet">
+    <link href="{% static "uppy/dist_style.min.css" %}" rel="stylesheet">
+    <script src="{% static "uppy/uppybundle.min.js" %}"></script>
+    <link rel="stylesheet"
+          href="{% static 'uppy/pastie.css' %}">
+    <style>
+        .markdown-body pre {
+            background-color: #f6f8fa;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        .markdown-body code {
+            font-size: 0.9rem;
+        }
+
+        .codehilite {
+            margin-bottom: 1rem;
+        }
+    </style>
+    <style>
+        .markdown-body {
+            color: #24292e !important;
+        }
+
+        .markdown-body h1,
+        .markdown-body h2,
+        .markdown-body h3,
+        .markdown-body h4,
+        .markdown-body h5,
+        .markdown-body h6 {
+            color: #24292e !important;
+        }
+
+        .markdown-body a {
+            color: #0969da !important;
+        }
+
+        .markdown-body pre {
+            background-color: #f6f8fa !important;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        .markdown-body code {
+            background-color: rgba(175, 184, 193, 0.2);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const submitBtn = document.getElementById("submit-btn");
+
+            const uppy = new Uppy({
+                autoProceed: true,
+                restrictions: {
+                    allowedFileTypes: ['video/*'],
+                    maxFileSize: 1024 * 1024 * 1024
+                }
+            });
+
+            // ✅ REQUIRED for drag + file picker
+            uppy.use(Dashboard, {
+                inline: true,
+                target: '#drag-drop-area',
+                showProgressDetails: true,
+                proudlyDisplayPoweredByUppy: false,
+                note: "Drag & drop video here OR click to browse",
+                height: 300
+            });
+
+            // ✅ REQUIRED: enables file selection (this is what you are missing)
+            uppy.use(FileInput, {
+                target: '#drag-drop-area'
+            });
+
+            // ✅ Resume support
+            uppy.use(GoldenRetriever);
+
+
+            // ✅ Upload
+            uppy.use(XHRUpload, {
+                endpoint: "{% url 'course:demo_video_upload' %}",
+                fieldName: "file",
+                chunkSize: 5 * 1024 * 1024,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            });
+
+            // Disable submit during upload
+            uppy.on('upload', () => {
+                submitBtn.disabled = true;
+                {#document.getElementById("upload-status").innerHTML =#}
+                {#    "<div class='alert alert-info'>Uploading...</div>";#}
+            });
+
+            // Error handling
+            uppy.on('error', (error) => {
+                document.getElementById("upload-status").innerHTML =
+                    "<div class='alert alert-danger'>Error: " + error + "</div>";
+            });
+
+            // Finalize
+            uppy.on('complete', async (result) => {
+                if (result.successful.length === 0) return;
+
+                const file = result.successful[0];
+                const uploadId = file.response.body.upload_id;
+                const formData = new FormData();
+                formData.append("upload_id", uploadId);
+
+                const res = await fetch("{% url 'course:demo_video_complete' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                console.log(data);
+                if (data) {
+                    {#document.getElementById("upload-status").innerHTML =#}
+                    {#"<div class='alert alert-success'>Uploaded & saved</div>";#}
+
+                    submitBtn.disabled = false;
+                    let source = document.getElementById("demo-video-src");
+                    let video = document.getElementById("demo-video-show");
+
+                    document.getElementById("upload_id").value = data.upload_id;
+                    document.getElementById("uploaded_file_name").value = data.file_name;
+                    source.src = data.file_url;
+
+                    video.load();   // IMPORTANT: reload the video
+                    {#video.play();   // optional: auto play#}
+
+                }
+            });
+
+        });
+    </script>
+
+    <script>
+        function updateContent(url, formId, divId, questionId) {
+
+            const form = document.getElementById(formId);
+            const mainDiv = document.getElementById(divId);
+
+            const formData = new FormData(form);
+            formData.forEach((k, v) => console.log(`key:${k}, val:${v}`));
+            fetch(url, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.html) {
+                        mainDiv.innerHTML = data.html;
+                    }
+                    if (data.previewHtml && questionId != null) {
+                        const previewDiv = document.getElementById(`question-preview-${questionId}`)
+                        previewDiv.innerHTML = data.previewHtml;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+
+        function deleteContent(url, divId, type, prevDivId, questionId, choiceId) {
+            const mainDiv = document.getElementById(divId);
+            const prevDiv = document.getElementById(prevDivId);
+
+            const formData = new FormData();
+
+            // Only append if the value is defined and not null
+            if (questionId !== undefined && questionId !== null) {
+                formData.append("questionId", questionId);
+            }
+            if (choiceId !== undefined && choiceId !== null) {
+                formData.append("choiceId", choiceId);
+            }
+
+            // Set type to 'content' only if type is undefined or null
+            const deleteType = type ?? 'content';
+            formData.append("delete_type", deleteType);
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "3L6DIogO3ta8XLQnC4ah0NRKs6rrlKVSUNiCGA2cxvVEfAHQtWgl2CiIfePUS5Nr",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (mainDiv) mainDiv.remove();
+                        if (prevDiv) prevDiv.remove();
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+
+        function addQuestion(url, quizId) {
+            const select = document.getElementById(`new-question-type-${quizId}`);
+            const creationType = select.value;
+
+            // Build the URL with query param
+
+            furl = `${url}?creation_type=${creationType}`;
+            // Fetch the HTML content
+            fetch(furl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'  // Optional: good practice for Django AJAX
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json(); // Expect HTML
+                })
+                .then(data => {
+                    // Append the returned HTML to the question list
+                    const questionList = document.getElementById(`question-list-${quizId}`);
+                    questionList.insertAdjacentHTML('beforeend', data.html);
+
+                })
+                .catch(error => {
+                    console.error('Error adding question:', error);
+                });
+        }
+
+        function addChoices(url, quizId, questionId) {
+            const creationType = 'choice';
+
+            // Build the URL with query param
+
+            furl = `${url}?creation_type=${creationType}&question_id=${questionId}`;
+            // Fetch the HTML content
+            fetch(furl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'  // Optional: good practice for Django AJAX
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json(); // Expect HTML
+                })
+                .then(data => {
+                    // Append the returned HTML to the question list
+                    const questionList = document.getElementById(`choice-list-${questionId}`);
+                    questionList.insertAdjacentHTML('beforeend', data.html);
+                })
+                .catch(error => {
+                    console.error('Error adding question:', error);
+                });
+        }
+    </script>
+    <script>
+        function addContent() {
+            let type = document.getElementById('add-type')
+            fetch(`{% url 'course:chapter_content_add' chapter.id %}?type=${type.value}`)
+                .then(res => res.json())
+                .then(data => {
+                    document
+                        .getElementById("chapter-content-list")
+                        .insertAdjacentHTML("beforeend", data.html);
+                });
+        }
+
+        function editChapter(url) {
+            fetch(`${url}?page-redirect=true`, {
+                method: "GET",
+                headers: {"X-Requested-With": "XMLHttpRequest"}
+            })
+                .then(res => res.text())
+                .then(html => {
+                    const container = document.getElementById('chapter-content');
+
+                    if (!container) {
+                        console.error("Chapter not found");
+                        return;
+                    }
+
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Edit error:", err);
+                    alert("Failed to load edit form");
+                });
+        }
+
+        function deleteChapter() {
+            let input = document.getElementById('confirm-chapter-delete');
+            let name = input.value;
+
+            if (!name) {
+                alert("Please enter chapter name to confirm");
+                return;
+            }
+
+            if (name !== '{{chapter.name}}') {
+                alert("Entered name does not match");
+                return;
+            }
+            fetch('{% url 'course:chapter_delete' course.slug unit.slug chapter.slug %}', {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "confirm_name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '{% url 'course:unit_chapter_list' course.slug unit.slug %}'
+                    } else {
+                        alert(data.error || "Error deleting unit");
+                    }
+                });
+        }
+
+    </script>
+{% endblock %}

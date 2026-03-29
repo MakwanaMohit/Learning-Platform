@@ -1,0 +1,57 @@
+<!-- partials/content/markdown.html -->
+{% load django_bootstrap5 %}
+<div id="content-body-{{ content.id }}">
+    <div class="mb-3">
+        <h5>{{ content.title }}</h5>
+
+        <div class="col-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-2">
+
+                    {% for f in content.files.all %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+
+                            <div>
+                                <a href="{{ f.file.url }}" target="_blank" class="text-decoration-none fw-semibold">
+                                    {{ f.file_name }}
+                                </a>
+                                <div class="text-muted small">
+                                    Uploaded on {{ f.uploaded_at|date:"M d, Y H:i" }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <a href="{{ f.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </div>
+
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">No files uploaded.</p>
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+
+    <!-- FORM -->
+    <form method="post" id="change-content-form-{{ content.id }}">
+
+        {% csrf_token %}
+        {% bootstrap_form form %}
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" type="button"
+                    onclick="updateContent('{% url 'course:chapter_content_id_change' content.id %}','change-content-form-{{ content.id }}','content-card-{{ content.id }}')">
+                Update
+            </button>
+            <button class="btn btn-danger btn-sm" type="button"
+                    onclick="deleteContent('{% url 'course:chapter_content_id_delete' content.id %}','content-card-{{ content.id }}')">
+                Delete
+            </button>
+        </div>
+    </form>
+</div>

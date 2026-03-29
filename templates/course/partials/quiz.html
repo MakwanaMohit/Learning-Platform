@@ -1,0 +1,100 @@
+<!-- partials/content/quiz.html -->
+{% load django_bootstrap5 %}
+<div id="content-body-{{ content.id }}">
+
+    <!-- PREVIEW (NOW COLLAPSIBLE) -->
+    <div class="accordion mb-3" id="previewAccordion-{{ quiz.id }}">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#preview-collapse-{{ quiz.id }}">
+                    Preview Quiz
+                </button>
+            </h2>
+            <div id="preview-collapse-{{ quiz.id }}"
+                 class="accordion-collapse collapse">
+
+                <div class="accordion-body">
+                    <h5>{{ quiz.title }}</h5>
+                    <p>{{ quiz.description }}</p>
+
+                    {% for question in quiz.questions.all %}
+                        {% include 'course/partials/question_preview.html' %}
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- EDIT SECTION -->
+    <div class="accordion" id="quizAccordion-{{ quiz.id }}">
+
+
+        <div id="quiz-edit-{{ quiz.id }}">
+            <!-- UPDATE QUIZ FORM (NOW ACCORDION ITEM) -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#quiz-form-collapse-{{ quiz.id }}">
+                        Update Quiz Details
+                    </button>
+                </h2>
+
+                <div id="quiz-form-collapse-{{ quiz.id }}" data-bs-parent="#quizAccordion-{{ quiz.id }}"
+                     class="accordion-collapse collapse show">
+
+                    <div class="accordion-body">
+                        <form id="change-content-form-{{ quiz.id }}">
+                            {% csrf_token %}
+                            {% bootstrap_form quiz_form %}
+                            <button class="btn btn-sm btn-primary" type="button"
+                                    onclick="updateContent('{% url 'course:chapter_content_id_change' quiz.id %}','change-content-form-{{ quiz.id }}','content-card-{{ quiz.id }}')">
+                                Update Quiz
+                            </button>
+
+
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div id="question-list-{{ quiz.id }}">
+                {% for question in questions %}
+                    {% include "course/partials/question.html" %}
+                {% endfor %}
+            </div>
+
+            <!-- ADD QUESTION -->
+            <div class="mt-3">
+                <select id="new-question-type-{{ quiz.id }}" class="form-select mb-2">
+                    <option value="mcq">MCQ</option>
+                    <option value="msq">MSQ</option>
+                    <option value="numeric">Numeric</option>
+                </select>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm"
+                            onclick="addQuestion('{% url 'course:chapter_quiz_add' quiz.id %}','{{ quiz.id }}')">
+                        + Add Question
+                    </button>
+                    <button class="btn btn-danger btn-sm" type="button"
+                            onclick="deleteContent('{% url 'course:chapter_content_id_delete' quiz.id %}','content-card-{{ quiz.id }}')">
+                        Delete
+                    </button>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+</div>
+
+</div>

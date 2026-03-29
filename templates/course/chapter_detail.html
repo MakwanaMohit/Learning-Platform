@@ -2,14 +2,14 @@
 {% load django_bootstrap5 %}
 
 {% block title %}
-    {{ course.title }} | {{ unit.title }}
+    {{ course.title }} | {{ unit.title }} | {{ chapter.name }}
 {% endblock %}
 
 {% block content %}
     <div class="container mt-4">
 
         <!-- UNIT CARD -->
-        <div class="card mb-4" id="unit-{{ unit.id }}">
+        <div class="card mb-4" id="">
             <div class="card-body">
 
                 <div id="unit-display-{{ unit.id }}">
@@ -17,6 +17,11 @@
 
                         <div id="unit-content" class="mb-3">
                             <a href="{{ course.get_absolute_url }}" class="text-decoration-none">
+                                <h5 class="mb-1 text-primary fw-semibold">
+                                    {{ course.title }}
+                                </h5>
+                            </a>
+                            <a href="{{ unit.get_absolute_url }}" class="text-decoration-none">
                                 <h5 class="mb-1 text-primary fw-semibold">
                                     {{ course.title }}
                                 </h5>
@@ -146,41 +151,29 @@
                         <div class="d-flex flex-column gap-2">
 
                             <!-- Top Row -->
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'course:chapter_detail' course.slug unit.slug chapter.slug %}"
+                                   class="btn btn-sm btn-outline-primary w-50">
+                                    Open
+                                </a>
 
+                                <button class="btn btn-sm btn-primary w-50"
+                                        onclick="editChapter('{% url 'course:chapter_change' course.slug unit.slug chapter.slug %}', 'chapter-{{ chapter.id }}')">
+                                    Edit
+                                </button>
+                            </div>
 
-                                {% if is_mentor %}
-                                    <div class="d-flex gap-2">
-                                    <a href="{% url 'course:chapter_content_change' course.slug unit.slug chapter.slug %}"
-                                       class="btn btn-sm btn-outline-primary w-50">
-                                        Open
-                                    </a>
+                            <!-- Bottom Row -->
+                            <div class="d-flex gap-2">
+                                <input type="text"
+                                       class="form-control form-control-sm"
+                                       placeholder="Type unit name"
+                                        id="chapter-delete-input-{{ chapter.id }}">
 
-                                    <button class="btn btn-sm btn-primary w-50"
-                                            onclick="editChapter('{% url 'course:chapter_change' course.slug unit.slug chapter.slug %}', 'chapter-{{ chapter.id }}')">
-                                        Edit
-                                    </button>
-                                    </div>
-                                {% else %}
-                                    <a href="{% url 'course:chapter_detail' course.slug unit.slug chapter.slug %}"
-                                       class="btn btn-sm btn-outline-primary">
-                                        Open
-                                    </a>
-                                {% endif %}
-
-
-                            {% if is_mentor%}<!-- Bottom Row -->
-                                <div class="d-flex gap-2">
-                                    <input type="text"
-                                           class="form-control form-control-sm"
-                                           placeholder="Type unit name"
-                                           id="chapter-delete-input-{{ chapter.id }}">
-
-                                    <button class="btn btn-sm btn-danger"
-                                            onclick="deleteChapter('{% url 'course:chapter_delete' course.slug unit.slug chapter.slug %}','{{ chapter.id }}','{{ chapter.name }}')">
-                                        Delete
-                                    </button>
-                                </div>
-                            {% endif %}
+                                <button class="btn btn-sm btn-danger" onclick="deleteChapter('{% url 'course:chapter_delete' course.slug unit.slug chapter.slug %}','{{ chapter.id }}','{{ chapter.name }}')">
+                                    Delete
+                                </button>
+                            </div>
 
                         </div>
 
@@ -281,8 +274,7 @@
                     console.error("Chapter edit error:", err);
                 });
         }
-
-        function deleteChapter(deleteUrl, chapterId, chapterName) {
+        function deleteChapter(deleteUrl, chapterId,chapterName) {
             let input = document.getElementById(`chapter-delete-input-${chapterId}`);
             let name = input.value;
 

@@ -129,12 +129,11 @@
 
                         {% if page_obj.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page=1">First</a>
+                                <a class="page-link" href="?page=1{% if query_string %}&{{ query_string }}{% endif %}">First</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                    Previous
-                                </a>
+                                <a class="page-link" href="?page=
+                                        {{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">Previous</a>
                             </li>
                         {% endif %}
 
@@ -146,14 +145,12 @@
 
                         {% if page_obj.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                    Next
-                                </a>
+                                <a class="page-link" href="?page=
+                                        {{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">Next</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
-                                    Last
-                                </a>
+                                <a class="page-link" href="?page=
+                                        {{ page_obj.paginator.num_pages }}{% if query_string %}&{{ query_string }}{% endif %}">Last</a>
                             </li>
                         {% endif %}
 
