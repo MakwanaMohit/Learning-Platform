@@ -1,0 +1,83 @@
+{% extends "course/base.html" %}
+{% block title %}Courses{% endblock %}
+
+{% block content %}
+<div class="row">
+
+    <!-- COURSE LIST -->
+    <div class="col-md-9">
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="{{ course.thumbnail.url }}"
+                             class="card-img-top"
+                             style="height:180px; object-fit:cover;">
+
+                        <div class="card-body">
+                            <h5 class="card-title">{{ course.title }}</h5>
+
+                            <p class="card-text">
+                                {{ course.short_description|truncatechars:80 }}
+                            </p>
+
+                            <p class="text-muted small">
+                                {{ course.category.name }} |
+                                {{ course.get_level_display }}
+                            </p>
+                        </div>
+
+                        <div class="card-footer">
+                            <a href="{{ course.get_absolute_url }}"
+                               class="btn btn-outline-primary btn-sm w-100">
+                                View Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p>No courses found.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- FILTER SIDEBAR RIGHT -->
+    <div class="col-md-3">
+        <form method="get">
+
+            <h5>Category</h5>
+            {% for cat in categories %}
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="category"
+                           value="{{ cat.slug }}">
+                    <label class="form-check-label">
+                        {{ cat.name }}
+                    </label>
+                </div>
+            {% endfor %}
+
+            <hr>
+
+            <h5>Tags</h5>
+            {% for tag in tags %}
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="tags"
+                           value="{{ tag.slug }}">
+                    <label class="form-check-label">
+                        {{ tag.name }}
+                    </label>
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-success mt-3 w-100">
+                Apply Filters
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
