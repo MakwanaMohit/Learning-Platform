@@ -1,14 +1,16 @@
 from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import path, include
-
+from requests import delete
 from course.models import Tag, Category
 from course.views.CourseIndex import CourseListView
-from course.views.CourseCreateUpdate import CourseCreateView, CreateTagCatView, CourseUpdateView, VideoUploadView, VideoCompleteView
+from course.views.CourseCreateUpdate import (CourseCreateView, CreateTagCatView, CourseUpdateView,
+                                             VideoUploadView, VideoCompleteView)
 from course.views.CourseDetail import CourseDetailView
 from course.views.CreateUpdateChapter import ChapterCreateView, ChapterUpdateView
-
 from course.views.CreateUpdateUnit import UnitCreateView, UnitUpdateView
+from course.views.chapterContent import (ChapterContentView, create_content, update_content, delete_content, )
+from course.views.quiz_content import create_quiz_item, update_quiz_item
 from course.views.chapterList import ChapterListView
 from course.views.delete import CourseDeleteView, UnitDeleteView, ChapterDeleteView
 
@@ -86,5 +88,29 @@ urlpatterns = [
     path("<slug:course_slug>/unit/<slug:unit_slug>/chapter/<slug:chapter_slug>/delete/",
          ChapterDeleteView.as_view(),
          name="chapter_delete"
+         ),
+    path("<slug:course_slug>/unit/<slug:unit_slug>/chapter/<slug:chapter_slug>/change-content/",
+         ChapterContentView.as_view(),
+         name="chapter_content_change"
+         ),
+    path("chapter-content/<slug:chapter_id>/add/",
+         create_content,
+         name="chapter_content_add"
+         ),
+    path("chapter-content/<slug:content_id>/change/",
+         update_content,
+         name="chapter_content_id_change"
+         ),
+    path("chapter-content/<slug:content_id>/delete/",
+         delete_content,
+         name="chapter_content_id_delete"
+         ),
+    path("chapter-content/<slug:content_id>/add-quiz/",
+         create_quiz_item,
+         name="chapter_quiz_add"
+         ),
+    path("chapter-content/<slug:content_id>/change-quiz/",
+         update_quiz_item,
+         name="chapter_quiz_change"
          ),
 ]

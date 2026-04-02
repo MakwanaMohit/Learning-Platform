@@ -1,0 +1,243 @@
+{% extends "course/base.html" %}
+{% load django_bootstrap5 %}
+{% load static %}
+
+{% block title %}
+    {% if object.pk %}Edit Course{% else %}Create Course{% endif %}
+{% endblock %}
+
+{% block js %}
+
+    <link href="{% static "uppy/core_style.min.css" %}" rel="stylesheet">
+    <link href="{% static "uppy/dist_style.min.css" %}" rel="stylesheet">
+    <script src="{% static "uppy/uppybundle.min.js" %}"></script>
+
+    <script>
+        function addCategory() {
+            let input = document.getElementById("new-category");
+            let name = input.value.trim();
+            if (!name) return;
+
+            fetch("{% url 'course:create_category' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) {
+                        let select = document.getElementById("id_category");
+                        let exists = Array.from(select.options).some(opt => opt.value == data.id);
+
+                        if (!exists) {
+                            let option = new Option(data.name, data.id, true, true);
+                            select.add(option);
+                        } else {
+                            select.value = data.id;
+                        }
+                        input.value = "";
+                    }
+                });
+        }
+
+        function addTag() {
+            let input = document.getElementById("new-tag");
+            let name = input.value.trim();
+            if (!name) return;
+
+            fetch("{% url 'course:create_tag' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "name=" + encodeURIComponent(name)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) {
+                        let select = document.getElementById("id_keywords");
+                        let exists = Array.from(select.options).some(opt => opt.value == data.id);
+
+                        if (!exists) {
+                            let option = new Option(data.name, data.id, true, true);
+                            select.add(option);
+                        } else {
+                            Array.from(select.options).forEach(opt => {
+                                if (opt.value == data.id) opt.selected = true;
+                            });
+                        }
+                        input.value = "";
+                    }
+                });
+        }
+    </script>
+    
+    {% comment %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const submitBtn = document.getElementById("submit-btn");
+
+            const uppy = new Uppy({
+                autoProceed: true,
+                restrictions: {
+                    allowedFileTypes: ['video/*'],
+                    maxFileSize: 1024 * 1024 * 1024
+                }
+            });
+
+            // ✅ REQUIRED for drag + file picker
+            uppy.use(Dashboard, {
+                inline: true,
+                target: '#demo-video-input-area',
+                showProgressDetails: true,
+                proudlyDisplayPoweredByUppy: false,
+                note: "Drag & drop video here OR click to browse",
+                height: 300
+            });
+
+            // ✅ REQUIRED: enables file selection (this is what you are missing)
+            uppy.use(FileInput, {
+                target: '#demo-video-input-area'
+            });
+
+            // ✅ Resume support
+            uppy.use(GoldenRetriever);
+
+
+            // ✅ Upload
+            uppy.use(XHRUpload, {
+                endpoint: "{% url 'course:demo_video_upload' %}",
+                fieldName: "file",
+                chunkSize: 5 * 1024 * 1024,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            });
+
+            // Disable submit during upload
+            uppy.on('upload', () => {
+                submitBtn.disabled = true;
+                {#document.getElementById("upload-status").innerHTML =#}
+                {#    "<div class='alert alert-info'>Uploading...</div>";#}
+            });
+
+            // Error handling
+            uppy.on('error', (error) => {
+                document.getElementById("upload-status").innerHTML =
+                    "<div class='alert alert-danger'>Error: " + error + "</div>";
+            });
+
+            // Finalize
+            uppy.on('complete', async (result) => {
+                if (result.successful.length === 0) return;
+
+                const file = result.successful[0];
+                const uploadId = file.response.body.upload_id;
+                const formData = new FormData();
+                formData.append("upload_id", uploadId);
+
+                const res = await fetch("{% url 'course:demo_video_complete' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                console.log(data);
+                if (data) {
+                    {#document.getElementById("upload-status").innerHTML =#}
+                    {#"<div class='alert alert-success'>Uploaded & saved</div>";#}
+
+                    submitBtn.disabled = false;
+                    let source = document.getElementById("demo-video-src");
+                    let video = document.getElementById("demo-video-show");
+
+                    document.getElementById("upload_id").value = data.upload_id;
+                    document.getElementById("uploaded_file_name").value = data.file_name;
+                    source.src = data.file_url;
+
+                    video.load();   // IMPORTANT: reload the video
+                    {#video.play();   // optional: auto play#}
+
+                }
+            });
+
+        });
+    </script>{% endcomment %}
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <h3 class="mb-4">
+                {% if object.pk %}Edit{% else %}Create New{% endif %} Course
+            </h3>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="upload_id" id="upload_id">
+                <input type="hidden" name="uploaded_file_name" id="uploaded_file_name">
+                {% for field in form %}
+
+                    {% if field.name == "category" %}
+                        <label>{{ field.label }}</label>
+                        <div class="d-flex mb-2">{{ field }}</div>
+
+                        <div class="d-flex mb-3">
+                            <input type="text" id="new-category" class="form-control me-2" placeholder="Add category">
+                            <button type="button" class="btn btn-outline-primary" onclick="addCategory()">Add</button>
+                        </div>
+
+                    {% elif field.name == "keywords" %}
+                        <label>{{ field.label }}</label>
+                        <div class="mb-2">{{ field }}</div>
+
+                        <div class="d-flex mb-3">
+                            <input type="text" id="new-tag" class="form-control me-2" placeholder="Add tag">
+                            <button type="button" class="btn btn-outline-primary" onclick="addTag()">Add</button>
+                        </div>
+
+                    {% elif field.name == "demo_video" %}
+                        <!-- skipped -->
+
+                    {% else %}
+                        {% bootstrap_field field %}
+                    {% endif %}
+
+                {% endfor %}
+
+                <!-- ✅ Show existing video (edit mode) -->
+                {% if object.pk and object.demo_video %}
+                    <div class="mb-3">
+                        <label>Current Video:</label><br>
+                        <video width="100%" controls id="demo-video-show">
+                            <source id="demo-video-src" src="{{ object.demo_video.url }}" type="video/mp4">
+                        </video>
+                    </div>
+                {% endif %}
+
+                <hr>
+                <label class="mb-2">Upload Video</label>
+                <div id="demo-video-input-area" class="border p-3"></div>
+
+                <div id="upload-status" class="mt-3"></div>
+
+                <br>
+
+                <button type="submit" id="submit-btn" class="btn btn-primary">
+                    {% if object.pk %}Edit{% else %}Create{% endif %} Course
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+{% endblock %}
