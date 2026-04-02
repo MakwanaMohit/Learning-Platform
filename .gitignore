@@ -21,7 +21,11 @@ media/
 uppyjs/
 sdist/
 var/
+media/
+media/chunked_uploads/
+*.part
 wheels/
+uppyjs/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
