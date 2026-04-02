@@ -1,0 +1,12 @@
+<div class="card mb-3 content-card"
+     id="content-card-{{ content.id }}">
+
+    <div class="card-body"
+         id="content-body-{{ content.id }}-{{ content.order }}">
+
+        {% load content_tags %}
+        {% render_content content %}
+
+    </div>
+
+</div>

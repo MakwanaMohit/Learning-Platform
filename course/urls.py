@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import path, include
 
 from course.models import Tag, Category
-from course.views import CourseListView
+from course.views.CourseIndex import CourseListView
 from course.views.CourseCreateUpdate import CourseCreateView, CreateTagCatView, CourseUpdateView, VideoUploadView, VideoCompleteView
 from course.views.CourseDetail import CourseDetailView
 from course.views.CreateUpdateChapter import ChapterCreateView, ChapterUpdateView
