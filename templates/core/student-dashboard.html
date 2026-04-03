@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | Learn Unified</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div id="student-dash" class="page">
+        <nav class="sidebar">
+            <h3>🎓 Student Portal</h3>
+            <ul>
+                <li onclick="showTab('stu-home', 'student')">📊 Dashboard</li>
+                <li onclick="showTab('stu-courses', 'student')">📚 Browse Courses</li>
+                <li onclick="logout()">🚪 Logout</li>
+            </ul>
+        </nav>
+        <main class="content">
+            <header>Welcome back, <span id="stu-user-name"></span>! 🌟</header>
+
+            <div id="stu-home" class="tab-content">
+                <h3>📈 Your Learning Journey</h3>
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <h4>📚 Enrolled Courses</h4>
+                        <p id="count-enrolled" class="stat-number">0</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h4>🎯 Completed</h4>
+                        <p class="stat-number">0</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h4>⭐ Achievements</h4>
+                        <p class="stat-number">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stu-courses" class="tab-content hidden">
+                <h3>🚀 Available Courses</h3>
+                <div id="course-list" class="grid-layout"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>

@@ -7,15 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register | Learn Unified</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-{#    {% bootstrap_css %}#}
-{#    {% bootstrap_javascript %}#}
 </head>
 <body>
     <nav class="nav-home">
-        <a href="{% url 'core:home' %}" class="link">🏠 Home</a>
+        <a href="{% url 'home' %}" class="link">🏠 Home</a>
     </nav>
 
-    <div id="auth-page">
+    <div id="auth-page" class="page">
         <div class="auth-container">
             <div class="logo">
                 <span class="logo-icon">🎓</span>
@@ -24,12 +22,10 @@
             <p class="tagline">Empowering Education Through Innovation</p>
             <div id="register-form">
                 <h2>🚀 Join Our Community</h2>
-                <form action="{% url 'accounts:register' %}" method="post">
-                    {% csrf_token %}
-                    {% bootstrap_form form %}
-                    <button type="submit">Register</button>
-                </form>
-                <p>Already have an account? <a href="{% url 'accounts:login' %}" class="link">Sign in here ←</a></p>
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button type="submit">Register</button>
+                <p>Already have an account? <a href="{% url 'login' %}" class="link">Sign in here ←</a></p>
             </div>
         </div>
     </div>

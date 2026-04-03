@@ -20,6 +20,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="uppy" level="application" />
     <orderEntry type="library" name="github-markdown-css" level="application" />
+    <orderEntry type="library" name="halfmoon" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />

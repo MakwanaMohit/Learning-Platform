@@ -1,5 +1,4 @@
-import shutil
-import uuid
+
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -7,7 +6,6 @@ from django.contrib.messages.context_processors import messages
 from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, UpdateView
 from django.contrib import messages
-from docutils.nodes import field
 
 from chunked_upload.models import ChunkedUpload
 from course.forms import CourseForm
@@ -24,6 +22,7 @@ import os
 from django.core.files.base import File
 
 from course.views.mixins import CourseChangeAccessMixin
+from learningPlatform.tusd import normalize_uploaded_path
 
 
 class CreateTagCatView(View):
@@ -63,30 +62,19 @@ class CourseCreateView(LoginRequiredMixin, RoleRequiredMixin, CreateView):
         form.instance.mentor = self.request.user
 
         upload_id = self.request.POST.get("upload_id")
-        file_name = self.request.POST.get("uploaded_file_name")
-
+        
         response = super().form_valid(form)
-
+        
         instance = self.object
-
+        
         if not upload_id:
             return response
 
-        try:
-            temp_obj = ChunkedUpload.objects.get(upload_id=upload_id)
-        except ChunkedUpload.DoesNotExist:
-            return response
+        clean_path = normalize_uploaded_path(form.instance.demo_video,upload_id)
 
-        temp_file = temp_obj.file
 
-        if not temp_file:
-            temp_obj.delete()
-            return response
-
-        temp_file.close()
-        instance.demo_video.name = temp_obj.file.name
+        instance.demo_video.name = clean_path
         instance.save(update_fields=["demo_video"])
-        temp_obj.delete(delete_file=False)
         return response
 
 class CourseUpdateView(LoginRequiredMixin, RoleRequiredMixin, CourseChangeAccessMixin, UpdateView):
@@ -103,33 +91,20 @@ class CourseUpdateView(LoginRequiredMixin, RoleRequiredMixin, CourseChangeAccess
 
 
     def form_valid(self, form):
-        chunk_id = self.request.POST.get("upload_id")
-        file_name = self.request.POST.get("uploaded_file_name")
+        upload_id = self.request.POST.get("upload_id")
+
         response = super().form_valid(form)
         instance = self.object
-        if not chunk_id:
+        if not upload_id:
             return response
-
-        try:
-            temp_obj = ChunkedUpload.objects.get(upload_id=chunk_id)
-        except ChunkedUpload.DoesNotExist:
-            messages.error(self.request, "Invalid temporary video.")
-            return self.form_invalid(form)
-
-        temp_file = temp_obj.file
-
-        if not temp_file:
-            messages.error(self.request, "No file found.")
-            return self.form_invalid(form)
-
-        temp_file.close()
-
         if self.object and self.object.demo_video:
             self.object.demo_video.delete(save=False)
 
-        instance.demo_video.name = temp_obj.file.name
-        instance.save(update_fields=["demo_video"])
-        temp_obj.delete(delete_file=False)
+        clean_path = normalize_uploaded_path(instance.demo_video,upload_id)
+
+        if instance.demo_video.name != clean_path:
+            instance.demo_video.name = clean_path
+            instance.save(update_fields=["demo_video"])
 
         return response
 
@@ -151,7 +126,7 @@ class VideoUploadView(ChunkedUploadView):
 class VideoCompleteView(ChunkedUploadCompleteView):
     do_md5_check = False
     response_data = {}
-    
+
     file_field = 'demo_video'
     model_class = Course
 

@@ -17,14 +17,22 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpResponse, JsonResponse
 from django.urls import path, include
 
-urlpatterns = [
+from learningPlatform.tusd import tus_hook_view
+
+urlpatterns = ([
     path('admin/', admin.site.urls),
     path('', include(('core.urls', 'core'), namespace='core')),
     path('course/', include(('course.urls','course'), namespace='course')),
 
     path("accounts/", include(("accounts.urls", "accounts"), namespace="accounts")),
     path("student/", include(("student.urls", "student"), namespace="student")),
+    
+    path("tus/hooks/", tus_hook_view, name="tus_hooks"),
+    path("tus/finalize/", lambda request:JsonResponse({'msg':'hello'}), name="tus_hook_finalize"),
 
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) +
+               static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) +
+               static(settings.PRIVATE_MEDIA_URL, document_root=settings.PRIVATE_MEDIA_ROOT))

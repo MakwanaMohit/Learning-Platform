@@ -1,14 +1,15 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learn Unified | Educational Platform</title>
-    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <nav class="nav-home">
-        <a href="home.html" class="link">🏠 Home</a>
+        <a href="{% url 'home' %}" class="link">🏠 Home</a>
     </nav>
 
     <div id="auth-page" class="page">
@@ -51,7 +52,7 @@
         </nav>
         <main class="content">
             <header>Welcome back, <span id="stu-user-name"></span>! 🌟</header>
-            
+
             <div id="stu-home" class="tab-content">
                 <h3>📈 Your Learning Journey</h3>
                 <div class="stats-grid">
@@ -88,7 +89,7 @@
         </nav>
         <main class="content">
             <header>Hello, <span id="men-user-name"></span>! 🎯</header>
-            
+
             <div id="men-manage" class="tab-content">
                 <h3>📚 Your Published Content</h3>
                 <div id="mentor-course-list" class="grid-layout"></div>
@@ -105,6 +106,6 @@
         </main>
     </div>
 
-    <script src="static/js/script.js"></script>
+    <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>

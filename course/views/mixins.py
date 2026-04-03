@@ -43,7 +43,7 @@ class ChapterPageMixin2:
 
 class CourseChangeAccessMixin:
     course_slug_url_kwarg = "course_slug"
-    course_queryset = Course.objects.all()
+    course_queryset = Course.objects.all().only("id","mentor_id")
 
     def get_object(self):
         slug = self.kwargs.get(self.course_slug_url_kwarg)

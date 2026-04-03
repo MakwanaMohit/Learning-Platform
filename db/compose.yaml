@@ -1,4 +1,3 @@
-
 services:
   db:
     image: postgres:16
@@ -35,6 +34,25 @@ services:
       - db
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+  tusd:
+    image: tusproject/tusd:latest
+    container_name: learning-tusd
+    restart: always
+    ports:
+      - "1080:8080"
+    volumes:
+      - "../media:/data"
+    environment:
+      TUSD_HOOKS_HTTP_HEADER_X_HOOK_SECRET: "9bUVNyVG5QR0s11t4NwL9O32yaI8nY"
+    command:
+      - "-upload-dir=/data"
+      - "-base-path=/tus/"
+      - "-hooks-http=http://host.docker.internal:8000/tus/hooks/"
+      - "-hooks-http-forward-headers=Authorization,X-User-ID,X-Request-ID,Cookie"
+      - "-hooks-enabled-events=pre-create,post-finish"
+      - "-cors-allow-origin=http://localhost:8000"
+      - "-cors-allow-credentials"
+      - "-cors-allow-headers=Authorization,X-User-ID,X-Request-ID,Cookie"
 
 volumes:
   postgres_data:
