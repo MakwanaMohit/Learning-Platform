@@ -7,7 +7,7 @@ from course.models.course import (
     Category, Tag, Course
 )
 from course.models.chapter_content import (
-ChapterContent, MarkdownContent, VideoContent
+    ChapterContent, MarkdownContent, VideoContent, Assignment, AssignmentFile
 )
 from course.models.quiz import (
 Quiz, Question, Choice, NumericAnswer,
@@ -74,3 +74,13 @@ class ChoiceAdmin(admin.ModelAdmin):
 @admin.register(NumericAnswer)
 class NumericAnswerAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(Assignment)
+class AssignmentAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(AssignmentFile)
+class AssignmentFileAdmin(admin.ModelAdmin):
+    pass
+

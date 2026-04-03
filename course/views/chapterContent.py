@@ -78,6 +78,8 @@ def create_content(request, chapter_id):
 
     order = max_order + 1
 
+    option_add = {'name':'','value':'','content-id':''}
+
     if content_type == "markdown":
         content = MarkdownContent.objects.create(
             chapter=chapter,
@@ -100,12 +102,19 @@ def create_content(request, chapter_id):
             title="New Video Content",
 
         )
+        option_add['name'] = f"{order}. video - New Video Content"
+        option_add['value'] = f"{content.id}|{content.content_type}"
+        option_add['id'] = str(content.id)
     elif content_type == "assignment":
         content = Assignment.objects.create(
             chapter=chapter,
             order=order,
             title="New Assignment",
         )
+        option_add['name'] = f"{order}. video - New Assignment"
+        option_add['value'] = f"{content.id}|{content.content_type}"
+        option_add['id'] = str(content.id)
+
     else:
         return JsonResponse({"error": "Invalid type"}, status=400)
 
@@ -115,7 +124,7 @@ def create_content(request, chapter_id):
         request=request
     )
 
-    return JsonResponse({"html": html})
+    return JsonResponse({"html": html,"upload_option":option_add})
 
 
 @login_required
@@ -155,6 +164,10 @@ def update_content(request, content_id):
 
     if form.is_valid():
         form.save()
+        upload_option = {'id':'','name':''}
+        if content.content_type in ['video','assignment']:
+            upload_option['id'] = str(content.id)
+            upload_option['name'] = f"{obj.order}. {obj.content_type} - {obj.title}"
 
         html = render_to_string(
             "course/partials/content_wrapper.html",
@@ -162,7 +175,7 @@ def update_content(request, content_id):
             request=request
         )
 
-        return JsonResponse({"html": html})
+        return JsonResponse({"html": html,'upload_option':upload_option})
 
     return JsonResponse({"errors": form.errors}, status=400)
 
@@ -199,7 +212,9 @@ def delete_content(request, content_id):
             "assignment": "assignment",
             "quiz": "quiz",
         }
-
+        optionId = ''
+        if content.content_type in ['assignment', 'video']:
+            optionId = str(content.id)
         attr = obj_map.get(content.content_type)
         if not attr:
             return JsonResponse({"error": "Invalid content type"}, status=400)
@@ -209,7 +224,7 @@ def delete_content(request, content_id):
             return JsonResponse({"error": "Object not found"}, status=404)
 
         obj.delete()
-        return JsonResponse({'success': True}, status=200)
+        return JsonResponse({'success': True,'optionId':optionId}, status=200)
 
     # ---------------- DELETE QUESTION ----------------
     elif delete_type == 'question':

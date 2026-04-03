@@ -29,7 +29,7 @@ DEBUG = True
 
 APPEND_SLASH = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost','127.0.0.1','host.docker.internal']
 
 # Application definition
 
@@ -76,8 +76,12 @@ TEMPLATES = [
         },
     },
 ]
-MEDIA_ROOT = BASE_DIR / "media"
-PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
+MEDIA_URL = '/public_media/'
+MEDIA_ROOT = BASE_DIR / "media/public_media"
+PRIVATE_MEDIA_ROOT = BASE_DIR / "media/private_media"
+PRIVATE_MEDIA_URL = "/private_media/"
+
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024
 # Authentication part

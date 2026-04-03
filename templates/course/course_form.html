@@ -106,23 +106,25 @@
             // ✅ Resume support
             uppy.use(GoldenRetriever);
 
-
-            // ✅ Upload
-            uppy.use(XHRUpload, {
-                endpoint: "{% url 'course:demo_video_upload' %}",
-                fieldName: "file",
+            uppy.use(Tus, {
+                endpoint: "http://localhost:1080/tus/",  // tusd server
                 chunkSize: 5 * 1024 * 1024,
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}"
-                }
+                withCredentials: true,   // ✅ required for Django session auth
+
             });
 
-            // Disable submit during upload
             uppy.on('upload', () => {
                 submitBtn.disabled = true;
-                {#document.getElementById("upload-status").innerHTML =#}
-                {#    "<div class='alert alert-info'>Uploading...</div>";#}
             });
+            uppy.on('file-added', (file) => {
+                let uploadType = '{% if object.pk %}update-course{% else %}create-course{% endif %}'
+                uppy.setFileMeta(file.id, {
+                    upload_type: uploadType,
+                    content_id: String({{ object.pk}}),
+                    salt: crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+                });
+            });
+
 
             // Error handling
             uppy.on('error', (error) => {
@@ -130,41 +132,27 @@
                     "<div class='alert alert-danger'>Error: " + error + "</div>";
             });
 
-            // Finalize
+
             uppy.on('complete', async (result) => {
                 if (result.successful.length === 0) return;
 
+                // Tus gives upload URL → extract upload ID
+
                 const file = result.successful[0];
-                const uploadId = file.response.body.upload_id;
-                const formData = new FormData();
-                formData.append("upload_id", uploadId);
+                const uploadURL = file.uploadURL;
+                const uploadId = uploadURL.split("/tus/").pop();
 
-                const res = await fetch("{% url 'course:demo_video_complete' %}", {
-                    method: "POST",
-                    headers: {
-                        "X-CSRFToken": "{{ csrf_token }}"
-                    },
-                    body: formData
-                });
 
-                const data = await res.json();
-                console.log(data);
-                if (data) {
-                    {#document.getElementById("upload-status").innerHTML =#}
-                    {#"<div class='alert alert-success'>Uploaded & saved</div>";#}
+                submitBtn.disabled = false;
 
-                    submitBtn.disabled = false;
-                    let source = document.getElementById("demo-video-src");
-                    let video = document.getElementById("demo-video-show");
+                let source = document.getElementById("demo-video-src");
+                let video = document.getElementById("demo-video-show");
 
-                    document.getElementById("upload_id").value = data.upload_id;
-                    document.getElementById("uploaded_file_name").value = data.file_name;
-                    source.src = data.file_url;
+                document.getElementById("upload_id").value = uploadId;
+                source.src = `/${uploadId}`;
 
-                    video.load();   // IMPORTANT: reload the video
-                    {#video.play();   // optional: auto play#}
+                video.load();   // IMPORTANT: reload the video
 
-                }
             });
 
         });
@@ -182,7 +170,6 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="upload_id" id="upload_id">
-                <input type="hidden" name="uploaded_file_name" id="uploaded_file_name">
                 {% for field in form %}
 
                     {% if field.name == "category" %}
@@ -213,14 +200,12 @@
                 {% endfor %}
 
                 <!-- ✅ Show existing video (edit mode) -->
-                {% if object.pk and object.demo_video %}
-                    <div class="mb-3">
-                        <label>Current Video:</label><br>
-                        <video width="100%" controls id="demo-video-show">
-                            <source id="demo-video-src" src="{{ object.demo_video.url }}" type="video/mp4">
-                        </video>
-                    </div>
-                {% endif %}
+                <div class="mb-3">
+                    <label>Current Video:</label><br>
+                    <video width="100%" controls id="demo-video-show">
+                        <source id="demo-video-src" src="{% if object.pk and object.demo_video %}{{ object.demo_video.url }}{% endif %}" type="video/mp4">
+                    </video>
+                </div>
 
                 <hr>
                 <label class="mb-2">Upload Video</label>

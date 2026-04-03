@@ -106,10 +106,32 @@
                 </button>
             </div>
         </div>
-<hr>
-                <div id="demo-video-input-area" class="border p-3"></div>
+        <hr>
+        <div class="mb-2">
+            <label class="form-label">Select Content</label>
+            <select id="upload-content-select" class="form-select">
+                <option value="">-- Select --</option>
 
-                <div id="upload-status" class="mt-3"></div>
+                {% for content in chapter.contents.all %}
+                    {% if content.content_type == "video" %}
+                        <option value="{{ content.id }}|{{ content.content_type }}"
+                                id="content-upload-{{ content.id }}">
+                            {{ content.order }}. {{ content.content_type }} - {{ content.videocontent.title }}
+                        </option>
+                    {% endif %}
+                    {% if content.content_type == "assignment" %}
+                        <option value="{{ content.id }}|{{ content.content_type }}"
+                                id="content-upload-{{ content.id }}">
+                            {{ content.order }}. {{ content.content_type }} - {{ content.assignment.title }}
+                        </option>
+                    {% endif %}
+                {% endfor %}
+
+            </select>
+        </div>
+        <div id="demo-video-input-area" class="border p-3"></div>
+
+        <div id="upload-status" class="mt-3"></div>
 
         <br><br><br>
         <br><br><br>
@@ -170,6 +192,24 @@
         }
     </style>
     <script>
+        function selectAndScrollToUpload(optionId) {
+            const option = document.getElementById(optionId);
+            if (!option) {
+                return;
+            }
+
+            const select = document.getElementById("upload-content-select");
+
+            select.value = option.value;
+
+            select.dispatchEvent(new Event("change"));
+
+            const uploadArea = document.getElementById("demo-video-input-area");
+            if (uploadArea) {
+                uploadArea.scrollIntoView({behavior: "smooth", block: "center"});
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
 
             const submitBtn = document.getElementById("submit-btn");
@@ -206,15 +246,64 @@
                 chunkSize: 5 * 1024 * 1024,
                 withCredentials: true,   // ✅ required for Django session auth
 
-                metadata: {
-                    upload_type: "demo",
-                    'course-id':'course.id'
-                }
             });
 
-            // Disable submit during upload
-            uppy.on('upload', () => {
-                submitBtn.disabled = true;
+            uppy.on('file-added', (file) => {
+
+                const select = document.getElementById("upload-content-select");
+                const selectedValue = select.value;
+
+                if (!selectedValue) {
+                    document.getElementById("upload-status").innerHTML =
+                        "<div class='alert alert-danger'>Please select the content from the dropdown</div>";
+                    uppy.removeFile(file.id);
+                    return;
+                }
+
+                const [contentId, contentType] = selectedValue.split("|");
+
+                let uploadType = "";
+
+                if (contentType === "video") {
+                    uploadType = "content-video";
+                } else if (contentType === "assignment") {
+                    uploadType = "content-assignment";
+                }
+
+                // ✅ Validate file type (only videos for video content)
+                if (contentType === "video" && !file.type.startsWith("video/")) {
+                    document.getElementById("upload-status").innerHTML =
+                        "<div class='alert alert-danger'>Only video files are allowed</div>";
+                    uppy.removeFile(file.id);
+                    return;
+                }
+
+                // ✅ Allow only latest video (remove previous ones)
+                if (contentType === "video") {
+                    const files = uppy.getFiles();
+
+                    files.forEach(f => {
+                        if (f.id !== file.id) {
+                            uppy.removeFile(f.id);
+                        }
+                    });
+                }
+
+                // Optional: if assignment needs restriction (e.g. PDF only)
+                /*
+                if (contentType === "assignment" && file.type !== "application/pdf") {
+                    document.getElementById("upload-status").innerHTML =
+                        "<div class='alert alert-danger'>Only PDF files are allowed</div>";
+                    uppy.removeFile(file.id);
+                    return;
+                }
+                */
+
+                uppy.setFileMeta(file.id, {
+                    upload_type: uploadType,
+                    content_id: String(contentId),
+                    salt: crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+                });
             });
 
             // Error handling
@@ -225,7 +314,7 @@
 
             // ✅ Upload complete
             uppy.on('complete', async (result) => {
-                if (result.successful.length === 0) return;
+                /* if (result.successful.length === 0) return;
 
                 const file = result.successful[0];
 
@@ -238,7 +327,7 @@
                 const data = await res.json();
 
                 if (data) {
-                    submitBtn.disabled = false;
+                     submitBtn.disabled = false;
 
                     let source = document.getElementById("demo-video-src");
                     let video = document.getElementById("demo-video-show");
@@ -248,7 +337,7 @@
 
                     source.src = data.file_url;
                     video.load();
-                }
+                } */
             });
 
         });
@@ -261,11 +350,12 @@
             const mainDiv = document.getElementById(divId);
 
             const formData = new FormData(form);
-            formData.forEach((k, v) => console.log(`key:${k}, val:${v}`));
+            {#formData.forEach((k, v) => console.log(`key:${k}, val:${v}`));#}
             fetch(url, {
                 method: "POST",
                 body: formData,
                 headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
                     "X-Requested-With": "XMLHttpRequest"
                 }
             })
@@ -277,6 +367,10 @@
                     if (data.previewHtml && questionId != null) {
                         const previewDiv = document.getElementById(`question-preview-${questionId}`)
                         previewDiv.innerHTML = data.previewHtml;
+                    }
+                    if (data.upload_option && data.upload_option.id) {
+                        const ele = document.getElementById(`content-upload-${data.upload_option.id}`)
+                        ele.textContent = data.upload_option.name
                     }
                 })
                 .catch(error => {
@@ -305,7 +399,7 @@
             fetch(url, {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": "3L6DIogO3ta8XLQnC4ah0NRKs6rrlKVSUNiCGA2cxvVEfAHQtWgl2CiIfePUS5Nr",
+                    "X-CSRFToken": "{{ csrf_token }}",
                     "X-Requested-With": "XMLHttpRequest"
                 },
                 body: formData
@@ -315,6 +409,9 @@
                     if (data.success) {
                         if (mainDiv) mainDiv.remove();
                         if (prevDiv) prevDiv.remove();
+                    }
+                    if (data.optionId) {
+                        document.getElementById(`content-upload-${data.optionId}`).remove()
                     }
                 })
                 .catch(error => {
@@ -387,6 +484,16 @@
                     document
                         .getElementById("chapter-content-list")
                         .insertAdjacentHTML("beforeend", data.html);
+
+                    if (data.upload_option && data.upload_option.id) {
+                        const select = document.getElementById('upload-content-select');
+                        const option = document.createElement('option');
+
+                        option.id = `content-upload-${data.upload_option.id}`
+                        option.value = data.upload_option.value;   // id/value
+                        option.textContent = data.upload_option.name;    // visible text
+                        select.appendChild(option);
+                    }
                 });
         }
 

@@ -75,7 +75,91 @@
                 });
         }
     </script>
-    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const submitBtn = document.getElementById("submit-btn");
+
+            const uppy = new Uppy({
+                autoProceed: true,
+                restrictions: {
+                    allowedFileTypes: ['video/*'],
+                    maxFileSize: 1024 * 1024 * 1024
+                }
+            });
+
+            // Dashboard UI
+            uppy.use(Dashboard, {
+                inline: true,
+                target: '#demo-video-input-area',
+                showProgressDetails: true,
+                proudlyDisplayPoweredByUppy: false,
+                note: "Drag & drop video here OR click to browse",
+                height: 300
+            });
+
+            // File input
+            uppy.use(FileInput, {
+                target: '#demo-video-input-area'
+            });
+
+
+            {#uppy.use(GoldenRetriever)#}
+
+            uppy.use(Tus, {
+                endpoint: "http://localhost:1080/tus/",
+                chunkSize: 5 * 1024 * 1024,
+                withCredentials: true
+            })
+
+            uppy.on('file-added', (file) => {
+                uppy.setFileMeta(file.id, {
+                    upload_type: '{{ tus_type }}',
+                    course_id: String("{{ course.id }}")
+                })
+            })
+
+            // Disable submit during upload
+            uppy.on('upload', () => {
+                submitBtn.disabled = true;
+            });
+
+            // Error handling
+            uppy.on('error', (error) => {
+                document.getElementById("upload-status").innerHTML =
+                    "<div class='alert alert-danger'>Error: " + error + "</div>";
+            });
+
+            // ✅ Upload complete
+            uppy.on('complete', async (result) => {
+                if (result.successful.length === 0) return;
+
+                const file = result.successful[0];
+
+                // Tus gives upload URL → extract upload ID
+                const uploadURL = file.uploadURL;
+                const uploadID = uploadURL.split("/").pop();
+
+                // ✅ Call finalize API (for demo only)
+                const res = await fetch(`/tus/finalize/?upload_id=${uploadID}`);
+                const data = await res.json();
+
+                if (data) {
+                    submitBtn.disabled = false;
+
+                    let source = document.getElementById("demo-video-src");
+                    let video = document.getElementById("demo-video-show");
+
+                    document.getElementById("upload_id").value = data.upload_id;
+                    document.getElementById("uploaded_file_name").value = data.file_name;
+
+                    source.src = data.file_url;
+                    video.load();
+                }
+            });
+
+        });
+    </script>
     {% comment %}
     <script>
         document.addEventListener("DOMContentLoaded", function () {

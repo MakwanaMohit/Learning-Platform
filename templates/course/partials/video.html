@@ -20,6 +20,10 @@
         {% bootstrap_form form %}
 
         <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" type="button"
+                    onclick="selectAndScrollToUpload('content-upload-{{ content.id }}')">
+                Upload Video
+            </button>
             <button class="btn btn-primary btn-sm" type="button"
                     onclick="updateContent('{% url 'course:chapter_content_id_change' content.id %}','change-content-form-{{ content.id }}','content-card-{{ content.id }}')">
                 Update
