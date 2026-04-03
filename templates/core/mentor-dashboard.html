@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentor Dashboard | Learn Unified</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div id="mentor-dash" class="page">
+        <nav class="sidebar">
+            <h3>👨‍🏫 Mentor Panel</h3>
+            <ul>
+                <li onclick="showTab('men-manage', 'mentor')">📖 My Courses</li>
+                <li onclick="showTab('men-upload', 'mentor')">✨ Upload Course</li>
+                <li onclick="logout()">🚪 Logout</li>
+            </ul>
+        </nav>
+        <main class="content">
+            <header>Hello, <span id="men-user-name"></span>! 🎯</header>
+
+            <div id="men-manage" class="tab-content">
+                <h3>📚 Your Published Content</h3>
+                <div id="mentor-course-list" class="grid-layout"></div>
+            </div>
+
+            <div id="men-upload" class="tab-content hidden">
+                <h3>🚀 Create New Course</h3>
+                <div class="form-card">
+                    <input type="text" id="course-title" placeholder="Course Title">
+                    <textarea id="course-description" placeholder="Course Description"></textarea>
+                    <input type="file" id="course-file" accept="video/*,application/pdf">
+                    <button onclick="uploadCourse()">Publish Course</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>

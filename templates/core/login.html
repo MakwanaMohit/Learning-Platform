@@ -5,32 +5,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Learn Unified</title>
+    <title>Login | Learn Unified</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-{#    {% bootstrap_css %}#}
-{#    {% bootstrap_javascript %}#}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
 </head>
 <body>
     <nav class="nav-home">
         <a href="{% url 'core:home' %}" class="link">🏠 Home</a>
     </nav>
 
-    <div id="auth-page">
+    <div id="auth-page" class="page">
         <div class="auth-container">
             <div class="logo">
                 <span class="logo-icon">🎓</span>
             </div>
             <h1>Learn Unified</h1>
             <p class="tagline">Empowering Education Through Innovation</p>
-            <div id="register-form">
-                <h2>🚀 Join Our Community</h2>
-                <form action="{% url 'accounts:register' %}" method="post">
-                    {% csrf_token %}
+            <form>
+                <div id="login-form">
+                    <h2>🔐 Welcome Back</h2>
                     {% bootstrap_form form %}
-                    <button type="submit">Register</button>
-                </form>
-                <p>Already have an account? <a href="{% url 'accounts:login' %}" class="link">Sign in here ←</a></p>
-            </div>
+                    <button type="submit">Login</button>
+                    <p>Don't have an account? <a href="{% url 'accounts:register' %}" class="link">Create one now →</a>
+                    </p>
+                </div>
+            </form>
         </div>
     </div>
 
